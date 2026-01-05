@@ -6,18 +6,18 @@ import Card from './ui/Card.tsx';
 import Button from './ui/Button.tsx';
 import Input from './ui/Input.tsx';
 import Select from './ui/Select.tsx';
-import { EXCLUDED_FROM_ROUTES, calculateAge, SERVICE_ROLE_MAPPING } from '../constants.tsx';
+import { EXCLUDED_FROM_ROUTES, calculateAge, SERVICE_ROLE_MAPPING, EXCLUDED_ZONES } from '../constants.tsx';
 import { calculateDistance, COVERAGE_POLYGON } from '../utils/geolocation.ts';
 
 declare global {
-  interface Window {
-    google: any;
-  }
+    interface Window {
+        google: any;
+    }
 }
 
 const RoutePlanner: React.FC = () => {
     const { patients, users, user, handoverNotes } = useAppContext(); // Added user from context
-    
+
     // State for filtering
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedRole, setSelectedRole] = useState<string>('MEDICO DOMICILIARIO');
@@ -27,10 +27,10 @@ const RoutePlanner: React.FC = () => {
     // Manual Route State (Editable)
     const [manualRoute, setManualRoute] = useState<Patient[]>([]);
     const [isDirty, setIsDirty] = useState(false); // Tracks if route has been manually edited
-    
+
     // Search State for Jefes
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // UI State
     const [expandedPatientId, setExpandedPatientId] = useState<string | null>(null);
 
@@ -52,7 +52,7 @@ const RoutePlanner: React.FC = () => {
             // Check Role
             const role = u.cargo?.toUpperCase() || '';
             const targetRole = selectedRole.toUpperCase();
-            
+
             // Allow fuzzy matching for roles
             let roleMatch = false;
             if (targetRole.includes('MEDICO')) roleMatch = role.includes('MEDICO');
@@ -66,7 +66,7 @@ const RoutePlanner: React.FC = () => {
             else if (targetRole.includes('TRABAJADOR')) roleMatch = role.includes('TRABAJADOR');
 
             // Check Exclusion
-            const isExcluded = EXCLUDED_FROM_ROUTES.some(excludedName => 
+            const isExcluded = EXCLUDED_FROM_ROUTES.some(excludedName =>
                 u.nombre.toUpperCase().includes(excludedName.toUpperCase())
             );
 
@@ -87,12 +87,12 @@ const RoutePlanner: React.FC = () => {
         try {
             const [startH, startM] = selectedStaffMember.turnoInicio.split(':').map(Number);
             const [endH, endM] = selectedStaffMember.turnoFin.split(':').map(Number);
-            
+
             let start = startH + startM / 60;
             let end = endH + endM / 60;
-            
+
             if (end < start) end += 24; // Handle night shifts crossing midnight
-            
+
             const duration = end - start;
             // Est. 45 mins per patient + 15 mins travel = 1 hour per patient roughly
             const capacityTime = Math.floor(duration * 60); // in minutes
@@ -109,19 +109,19 @@ const RoutePlanner: React.FC = () => {
 
         const start = new Date(patient.antibiotico.fechaInicio);
         const end = new Date(patient.antibiotico.fechaTerminacion);
-        
+
         // Simple string-based date comparison to avoid timezone issues with exact times for this basic check
         const targetDate = new Date(dateStr);
-        
+
         // Reset times to compare just dates
         const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
         const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
         const t = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
         if (t >= s && t <= e) {
-             return [`Cada ${patient.antibiotico.frecuenciaHoras}h`];
+            return [`Cada ${patient.antibiotico.frecuenciaHoras}h`];
         }
-        
+
         return [];
     };
 
@@ -130,7 +130,7 @@ const RoutePlanner: React.FC = () => {
         const notes = handoverNotes
             .filter(n => n.patientId === patientId)
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        
+
         if (notes.length === 0) return "Sin novedades registradas.";
         const last = notes[0];
         return `${last.authorRole} (${new Date(last.timestamp).toLocaleDateString()}): ${last.note.substring(0, 100)}${last.note.length > 100 ? '...' : ''}`;
@@ -149,47 +149,47 @@ const RoutePlanner: React.FC = () => {
         const isAuxiliar = selectedStaffMember.cargo.includes('AUXILIAR');
 
         const filtered = patients.filter(p => {
-             if (p.estado !== 'Aceptado' || !p.fechaIngreso || !p.coordinates) return false;
-             
-             // --- 1. THERAPY MATCHING LOGIC ---
-             // Check if patient needs a therapy that matches the staff's role
-             const patientNeeds = Object.entries(p.terapias)
+            if (p.estado !== 'Aceptado' || !p.fechaIngreso || !p.coordinates) return false;
+
+            // --- 1. THERAPY MATCHING LOGIC ---
+            // Check if patient needs a therapy that matches the staff's role
+            const patientNeeds = Object.entries(p.terapias)
                 .filter(([_, required]) => required)
                 .map(([terapia]) => terapia.toUpperCase());
-            
-             const hasMatchingTherapy = patientNeeds.some(need => staffServices.includes(need));
-             
-             // Special case: Antibiotics for Auxiliaries (might not be in simple mapping depending on key)
-             const hasAntibioticNeed = isAuxiliar && p.terapias['Aplicación de terapia antibiótica'];
 
-             // If the staff member cannot perform any of the patient's required therapies, skip
-             if (!hasMatchingTherapy && !hasAntibioticNeed) return false;
+            const hasMatchingTherapy = patientNeeds.some(need => staffServices.includes(need));
+
+            // Special case: Antibiotics for Auxiliaries (might not be in simple mapping depending on key)
+            const hasAntibioticNeed = isAuxiliar && p.terapias['Aplicación de terapia antibiótica'];
+
+            // If the staff member cannot perform any of the patient's required therapies, skip
+            if (!hasMatchingTherapy && !hasAntibioticNeed) return false;
 
 
-             // --- 2. SCHEDULE/INTERVAL LOGIC ---
-             if (isAuxiliar && hasAntibioticNeed) {
+            // --- 2. SCHEDULE/INTERVAL LOGIC ---
+            if (isAuxiliar && hasAntibioticNeed) {
                 const doses = getAntibioticSchedule(p, selectedDate);
                 if (doses.length > 0) return true; // Always show if antibiotic is due today
-             }
+            }
 
-             // Standard Logic for Regular Visits
-             let intervalDays = 0;
-             if (p.programa === 'Virrey solis en Casa Hospitalario') intervalDays = 3;
-             else if (p.programa === 'Virrey solis en Casa Crónico') intervalDays = 90;
-             else if (p.programa === 'Virrey solis en Casa Crónico Paliativo') intervalDays = 7;
-             
-             // Pediatric override
-             if (calculateAge(p.fechaNacimiento) < 5) intervalDays = 1;
+            // Standard Logic for Regular Visits
+            let intervalDays = 0;
+            if (p.programa === 'Virrey solis en Casa Hospitalario') intervalDays = 3;
+            else if (p.programa === 'Virrey solis en Casa Crónico') intervalDays = 90;
+            else if (p.programa === 'Virrey solis en Casa Crónico Paliativo') intervalDays = 7;
 
-             if (intervalDays === 0) return false;
+            // Pediatric override
+            if (calculateAge(p.fechaNacimiento) < 5) intervalDays = 1;
 
-             const ingressDate = new Date(p.fechaIngreso);
-             const targetDate = new Date(selectedDate);
-             
-             const diffTime = Math.abs(targetDate.getTime() - ingressDate.getTime());
-             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (intervalDays === 0) return false;
 
-             return diffDays % intervalDays === 0 || diffDays === 0; 
+            const ingressDate = new Date(p.fechaIngreso);
+            const targetDate = new Date(selectedDate);
+
+            const diffTime = Math.abs(targetDate.getTime() - ingressDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays % intervalDays === 0 || diffDays === 0;
         });
 
         // Default Sort
@@ -198,7 +198,7 @@ const RoutePlanner: React.FC = () => {
             if (isAuxiliar) {
                 const aDoses = getAntibioticSchedule(a, selectedDate).length > 0;
                 const bDoses = getAntibioticSchedule(b, selectedDate).length > 0;
-                
+
                 if (aDoses && !bDoses) return -1;
                 if (!aDoses && bDoses) return 1;
             }
@@ -255,16 +255,16 @@ const RoutePlanner: React.FC = () => {
     const searchResults = useMemo(() => {
         if (!searchTerm || !canEditRoute) return [];
         const lowerTerm = searchTerm.toLowerCase();
-        
+
         return patients.filter(p => {
             // Must not be in current route
             const alreadyInRoute = manualRoute.some(routeP => routeP.id === p.id);
             if (alreadyInRoute) return false;
-            
+
             // Match name or ID
             const nameMatch = p.nombreCompleto.toLowerCase().includes(lowerTerm);
             const idMatch = p.id.includes(lowerTerm);
-            
+
             return (nameMatch || idMatch) && p.coordinates && p.estado === 'Aceptado';
         }).slice(0, 5); // Limit results
     }, [patients, searchTerm, manualRoute, canEditRoute]);
@@ -303,7 +303,7 @@ const RoutePlanner: React.FC = () => {
                 strokeWeight: 2,
                 fillColor: "#0D47A1",
                 fillOpacity: 0.1,
-                clickable: false 
+                clickable: false
             });
             coveragePolygon.setMap(map);
 
@@ -329,7 +329,7 @@ const RoutePlanner: React.FC = () => {
         // Use manualRoute instead of sortedRoute (calculatedRoute)
         manualRoute.forEach((patient, index) => {
             if (!patient.coordinates) return;
-            
+
             const position = { lat: patient.coordinates.lat, lng: patient.coordinates.lng };
             pathCoords.push(position);
 
@@ -384,7 +384,7 @@ const RoutePlanner: React.FC = () => {
             });
             polyline.setMap(map);
             polylineRef.current = polyline;
-            
+
             // Fit bounds
             const bounds = new window.google.maps.LatLngBounds();
             pathCoords.forEach(c => bounds.extend(c));
@@ -397,7 +397,7 @@ const RoutePlanner: React.FC = () => {
     const maxCapacity = selectedStaffMember?.maxPacientes || 6;
     const currentLoad = manualRoute.length;
     const isOverCapacity = currentLoad > maxCapacity;
-    
+
     // Time Load Logic
     const estimatedMinutes = currentLoad * 60; // Approx 60 mins per patient visit incl travel
     const availableMinutes = shiftMetrics.capacityTime;
@@ -406,11 +406,11 @@ const RoutePlanner: React.FC = () => {
     return (
         <div className="flex flex-col h-full space-y-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                 <h1 className="text-2xl font-bold text-gray-800">Planificador de Rutas Inteligente</h1>
-                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                <h1 className="text-2xl font-bold text-gray-800">Planificador de Rutas Inteligente</h1>
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
                     <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
-                    <select 
-                        value={selectedRole} 
+                    <select
+                        value={selectedRole}
                         onChange={e => setSelectedRole(e.target.value)}
                         className="border rounded-md px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-brand-lightblue"
                     >
@@ -437,7 +437,7 @@ const RoutePlanner: React.FC = () => {
                             Guardar Asignación
                         </Button>
                     )}
-                 </div>
+                </div>
             </div>
 
             {selectedStaffMember && (
@@ -454,18 +454,18 @@ const RoutePlanner: React.FC = () => {
                             {isOverCapacity && <span className="ml-2 text-red-600">⚠️ Cupo Excedido</span>}
                         </div>
                     </div>
-                    
+
                     {/* Schedule Visualization Bar */}
                     {availableMinutes > 0 && (
                         <div className="flex items-center gap-2">
-                             <span className="text-xs font-medium w-20">Carga Horaria:</span>
-                             <div className="flex-grow bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                <div 
-                                    className={`h-2.5 rounded-full ${timeLoadPercent >= 100 ? 'bg-red-600' : 'bg-green-500'}`} 
+                            <span className="text-xs font-medium w-20">Carga Horaria:</span>
+                            <div className="flex-grow bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                <div
+                                    className={`h-2.5 rounded-full ${timeLoadPercent >= 100 ? 'bg-red-600' : 'bg-green-500'}`}
                                     style={{ width: `${timeLoadPercent}%` }}
                                 ></div>
-                             </div>
-                             <span className="text-xs text-gray-600">{estimatedMinutes}min / {availableMinutes}min</span>
+                            </div>
+                            <span className="text-xs text-gray-600">{estimatedMinutes}min / {availableMinutes}min</span>
                         </div>
                     )}
                 </div>
@@ -477,16 +477,16 @@ const RoutePlanner: React.FC = () => {
                         <h3 className="font-bold text-lg">Ruta Sugerida ({manualRoute.length})</h3>
                         {canEditRoute && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">Modo Edición Activo</span>}
                     </div>
-                    
+
                     {!selectedStaffMember && (
-                         <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mb-2">Seleccione un colaborador para ver los pacientes que coinciden con su perfil y horario.</p>
+                        <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mb-2">Seleccione un colaborador para ver los pacientes que coinciden con su perfil y horario.</p>
                     )}
 
                     {/* --- Manual Add Patient (JEFES Only) --- */}
                     {canEditRoute && selectedStaffMember && (
                         <div className="mb-4 relative">
-                            <Input 
-                                placeholder="🔍 Buscar paciente para agregar..." 
+                            <Input
+                                placeholder="🔍 Buscar paciente para agregar..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                                 className="text-sm"
@@ -494,8 +494,8 @@ const RoutePlanner: React.FC = () => {
                             {searchTerm && searchResults.length > 0 && (
                                 <div className="absolute z-50 w-full bg-white border border-gray-300 rounded-b shadow-lg mt-1 max-h-40 overflow-y-auto">
                                     {searchResults.map(p => (
-                                        <div 
-                                            key={p.id} 
+                                        <div
+                                            key={p.id}
                                             className="p-2 hover:bg-brand-lightblue hover:text-white cursor-pointer border-b last:border-0 text-sm flex justify-between items-center"
                                             onClick={() => addPatientToRoute(p)}
                                         >
@@ -512,65 +512,66 @@ const RoutePlanner: React.FC = () => {
                             )}
                         </div>
                     )}
-                    
+
                     {manualRoute.length > 0 ? (
                         <ul className="space-y-3">
                             {manualRoute.map((p, i) => {
                                 const isExpanded = expandedPatientId === p.id;
                                 const isPriority = selectedRole.includes('AUXILIAR') && getAntibioticSchedule(p, selectedDate).length > 0;
-                                
+
                                 return (
-                                <li key={p.id} className={`border-b pb-2 last:border-0 p-1 rounded transition-colors ${isPriority ? 'bg-purple-50 border-purple-200' : 'hover:bg-gray-50'}`}>
-                                    <div className="flex items-start gap-2">
-                                        <div className="flex flex-col items-center gap-1 mt-1">
-                                             <span className={`font-bold text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs ${isPriority ? 'bg-purple-600' : 'bg-brand-blue'}`}>{i + 1}</span>
-                                             {canEditRoute && (
-                                                 <div className="flex flex-col">
-                                                     <button onClick={() => movePatient(i, 'up')} disabled={i === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30">▲</button>
-                                                     <button onClick={() => movePatient(i, 'down')} disabled={i === manualRoute.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30">▼</button>
-                                                 </div>
-                                             )}
-                                        </div>
-                                        <div className="flex-grow">
-                                            <div className="cursor-pointer" onClick={() => setExpandedPatientId(isExpanded ? null : p.id)}>
-                                                <div className="flex justify-between items-start">
-                                                    <span className="font-medium text-gray-900 block hover:text-brand-blue">{p.nombreCompleto}</span>
-                                                    {isExpanded ? 
-                                                        <span className="text-gray-400 text-xs">▲</span> : 
-                                                        <span className="text-gray-400 text-xs">▼</span>
-                                                    }
+                                    <li key={p.id} className={`border-b pb-2 last:border-0 p-1 rounded transition-colors ${isPriority ? 'bg-purple-50 border-purple-200' : 'hover:bg-gray-50'}`}>
+                                        <div className="flex items-start gap-2">
+                                            <div className="flex flex-col items-center gap-1 mt-1">
+                                                <span className={`font-bold text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs ${isPriority ? 'bg-purple-600' : 'bg-brand-blue'}`}>{i + 1}</span>
+                                                {canEditRoute && (
+                                                    <div className="flex flex-col">
+                                                        <button onClick={() => movePatient(i, 'up')} disabled={i === 0} className="text-gray-400 hover:text-blue-600 disabled:opacity-30">▲</button>
+                                                        <button onClick={() => movePatient(i, 'down')} disabled={i === manualRoute.length - 1} className="text-gray-400 hover:text-blue-600 disabled:opacity-30">▼</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-grow">
+                                                <div className="cursor-pointer" onClick={() => setExpandedPatientId(isExpanded ? null : p.id)}>
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="font-medium text-gray-900 block hover:text-brand-blue">{p.nombreCompleto}</span>
+                                                        {isExpanded ?
+                                                            <span className="text-gray-400 text-xs">▲</span> :
+                                                            <span className="text-gray-400 text-xs">▼</span>
+                                                        }
+                                                    </div>
+                                                    <p className="text-gray-500 text-xs">{p.direccion}</p>
+                                                    {isPriority && (
+                                                        <span className="inline-block mt-1 bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-bold">⚠️ Antibiótico</span>
+                                                    )}
                                                 </div>
-                                                <p className="text-gray-500 text-xs">{p.direccion}</p>
-                                                {isPriority && (
-                                                    <span className="inline-block mt-1 bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-bold">⚠️ Antibiótico</span>
+
+                                                {/* Collapsible Details */}
+                                                {isExpanded && (
+                                                    <div className="mt-2 text-xs bg-white bg-opacity-60 p-2 rounded border border-gray-100 animate-fade-in">
+                                                        <p><strong>Programa:</strong> {p.programa}</p>
+                                                        <p><strong>Dx:</strong> {p.diagnosticoEgreso}</p>
+                                                        <p className="mt-1"><strong>Última Novedad:</strong></p>
+                                                        <p className="italic text-gray-600 pl-1 border-l-2 border-gray-300">
+                                                            {getLastNoteSummary(p.id)}
+                                                        </p>
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            {/* Collapsible Details */}
-                                            {isExpanded && (
-                                                <div className="mt-2 text-xs bg-white bg-opacity-60 p-2 rounded border border-gray-100 animate-fade-in">
-                                                    <p><strong>Programa:</strong> {p.programa}</p>
-                                                    <p><strong>Dx:</strong> {p.diagnosticoEgreso}</p>
-                                                    <p className="mt-1"><strong>Última Novedad:</strong></p>
-                                                    <p className="italic text-gray-600 pl-1 border-l-2 border-gray-300">
-                                                        {getLastNoteSummary(p.id)}
-                                                    </p>
-                                                </div>
+                                            {canEditRoute && (
+                                                <button
+                                                    onClick={() => removePatientFromRoute(i)}
+                                                    className="text-gray-400 hover:text-red-600 p-1 self-start"
+                                                    title="Eliminar de la ruta"
+                                                >
+                                                    ✖
+                                                </button>
                                             )}
                                         </div>
-                                        
-                                        {canEditRoute && (
-                                            <button 
-                                                onClick={() => removePatientFromRoute(i)}
-                                                className="text-gray-400 hover:text-red-600 p-1 self-start"
-                                                title="Eliminar de la ruta"
-                                            >
-                                                ✖
-                                            </button>
-                                        )}
-                                    </div>
-                                </li>
-                            )})}
+                                    </li>
+                                )
+                            })}
                         </ul>
                     ) : (
                         <p className="text-gray-500 text-sm text-center mt-10">No hay pacientes asignados para esta fecha/colaborador.</p>

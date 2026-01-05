@@ -172,3 +172,33 @@ export const API_BASE_URL = 'http://localhost:8000/api';
 
 // Map Configuration
 export const MAP_CENTER_DEFAULT = { lat: 4.624335, lng: -74.063644 };
+
+// Roles Asistenciales
+export const ROLES_ASISTENCIALES = [
+    'MEDICO DOMICILIARIO',
+    'AUXILIAR DE ENFERMERIA',
+    'ENFERMERO(A) JEFE PAD',
+    'FISIOTERAPEUTA',
+    'FONOAUDIOLOGO',
+    'TERAPEUTA OCUPACIONAL',
+    'TRABAJADOR SOCIAL',
+    'PSICOLOGO',
+    'NUTRICIONISTA'
+];
+
+// Auditfarma Emails
+export const AUDITFARMA_EMAILS = [
+    'auditoria@auditfarma.com',
+    'produccion@auditfarma.com',
+    'admin@auditfarma.com'
+];
+
+// Medicamentos de Alto Riesgo
+export const MEDICAMENTOS_ALTO_RIESGO = [
+    'VANCOMICINA',
+    'MEROPENEM',
+    'IMIPENEM',
+    'COLISTINA',
+    'LINEZOLID',
+    'DAPTOMICINA'
+];

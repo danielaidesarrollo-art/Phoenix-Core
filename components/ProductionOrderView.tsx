@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { calculateAge, AUDIFARMA_EMAILS, MEDICAMENTOS_ALTO_RIESGO } from '../constants.tsx';
+import { calculateAge, AUDITFARMA_EMAILS, MEDICAMENTOS_ALTO_RIESGO } from '../constants.tsx';
 import Card from './ui/Card.tsx';
 import Button from './ui/Button.tsx';
 import Input from './ui/Input.tsx';
@@ -11,7 +11,7 @@ const ProductionOrderView: React.FC = () => {
     const { patients, user } = useAppContext();
     const [cutoffTime, setCutoffTime] = useState<'14:00' | '17:00'>('14:00');
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-    
+
     // Local state for administrative fields not in Patient model (Authorizations, NAPs, Reutilization)
     // Key: PatientID, Value: Object with fields
     const [adminData, setAdminData] = useState<Record<string, { nap: string, auth: string, reutilization: string, napAuth: string }>>({});
@@ -23,13 +23,13 @@ const ProductionOrderView: React.FC = () => {
     // Filter patients with ACTIVE antibiotic therapy
     const antibioticPatients = useMemo(() => {
         if (!Array.isArray(patients)) return [];
-        
+
         return patients.filter(p => {
             if (p.estado !== 'Aceptado') return false;
-            
+
             // Must have antibiotic therapy checked
             if (!p.terapias['Aplicación de terapia antibiótica']) return false;
-            
+
             // Must have antibiotic data
             if (!p.antibiotico || !p.antibiotico.medicamento) return false;
 
@@ -38,9 +38,9 @@ const ProductionOrderView: React.FC = () => {
             const end = new Date(p.antibiotico.fechaTerminacion);
             const current = new Date();
             // Reset time part for accurate date comparison
-            current.setHours(0,0,0,0);
-            start.setHours(0,0,0,0);
-            end.setHours(0,0,0,0);
+            current.setHours(0, 0, 0, 0);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
 
             return current >= start && current <= end;
         });
@@ -83,9 +83,9 @@ const ProductionOrderView: React.FC = () => {
 
         const selectedPatients = antibioticPatients.filter(p => selectedRows.has(p.id));
         const count = selectedPatients.length;
-        
-        const recipientList = AUDIFARMA_EMAILS.join(', ');
-        
+
+        const recipientList = AUDITFARMA_EMAILS.join(', ');
+
         // Simulation of Email Sending
         const confirmation = window.confirm(
             `Está a punto de avalar y enviar la Orden de Producción (Corte ${cutoffTime}) con ${count} pacientes a:\n\n${recipientList}\n\n¿Desea continuar?`
@@ -98,7 +98,7 @@ const ProductionOrderView: React.FC = () => {
                 drug: p.antibiotico?.medicamento,
                 adminDetails: adminData[p.id]
             })));
-            
+
             alert(`✅ Orden de Producción (Corte ${cutoffTime}) enviada exitosamente.\n\nSe ha notificado a Audifarma y Central de Mezclas.`);
             // In a real app, this would trigger an API call to a backend service like SendGrid/Nodemailer
         }
@@ -111,17 +111,17 @@ const ProductionOrderView: React.FC = () => {
                     <h1 className="text-3xl font-bold text-gray-800">Orden de Producción de Antibióticos</h1>
                     <p className="text-gray-600">Gestión y solicitud diaria de mezclas intravenosas.</p>
                 </div>
-                
+
                 <div className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                     <span className="font-semibold text-gray-700">Seleccionar Corte:</span>
                     <div className="flex gap-2">
-                        <button 
+                        <button
                             onClick={() => setCutoffTime('14:00')}
                             className={`px-4 py-2 rounded-md font-medium transition ${cutoffTime === '14:00' ? 'bg-brand-blue text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
                             14:00
                         </button>
-                        <button 
+                        <button
                             onClick={() => setCutoffTime('17:00')}
                             className={`px-4 py-2 rounded-md font-medium transition ${cutoffTime === '17:00' ? 'bg-brand-blue text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
@@ -149,9 +149,9 @@ const ProductionOrderView: React.FC = () => {
                         <thead className="bg-green-100 border-b-2 border-green-200 text-green-900 uppercase">
                             <tr>
                                 <th className="px-2 py-3 text-center">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={antibioticPatients.length > 0 && selectedRows.size === antibioticPatients.length} 
+                                    <input
+                                        type="checkbox"
+                                        checked={antibioticPatients.length > 0 && selectedRows.size === antibioticPatients.length}
                                         onChange={toggleAll}
                                         className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                                     />
@@ -183,20 +183,20 @@ const ProductionOrderView: React.FC = () => {
 
                                     // Logic for Alerts
                                     const medicationName = p.antibiotico?.medicamento || '';
-                                    const isHighRisk = MEDICAMENTOS_ALTO_RIESGO.some(riskMed => 
+                                    const isHighRisk = MEDICAMENTOS_ALTO_RIESGO.some(riskMed =>
                                         medicationName.toUpperCase().includes(riskMed)
                                     );
 
                                     const admissionDate = new Date(p.fechaIngreso);
                                     const timeDiff = Math.abs(new Date().getTime() - admissionDate.getTime());
-                                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+                                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
                                     const isNewPatient = dayDiff <= 2; // Considered new if admitted within last 2 days
 
                                     return (
                                         <tr key={p.id} className={`hover:bg-gray-50 transition ${isSelected ? 'bg-green-50' : ''}`}>
                                             <td className="px-2 py-2 text-center">
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => toggleRow(p.id)}
                                                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
@@ -229,11 +229,11 @@ const ProductionOrderView: React.FC = () => {
                                             <td className="px-2 py-2 bg-blue-50">{p.antibiotico?.frecuenciaHoras} Hrs</td>
                                             <td className="px-2 py-2 text-center">{p.antibiotico?.diasTotales}</td>
                                             <td className="px-2 py-2 text-red-600 font-bold text-xs">{p.alergicoMedicamentos ? (p.alergiasInfo || 'SÍ') : 'NO'}</td>
-                                            
+
                                             {/* Editable Administrative Fields */}
                                             <td className="px-1 py-2">
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     className="w-full text-xs border border-gray-300 rounded px-1 py-1"
                                                     value={admin.nap}
                                                     onChange={(e) => handleAdminDataChange(p.id, 'nap', e.target.value)}
@@ -242,15 +242,15 @@ const ProductionOrderView: React.FC = () => {
                                             </td>
                                             <td className="px-2 py-2 whitespace-nowrap text-xs">{p.antibiotico?.fechaTerminacion}</td>
                                             <td className="px-1 py-2">
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     className="w-full text-xs border border-gray-300 rounded px-1 py-1"
                                                     value={admin.reutilization}
                                                     onChange={(e) => handleAdminDataChange(p.id, 'reutilization', e.target.value)}
                                                 />
                                             </td>
                                             <td className="px-1 py-2">
-                                                <select 
+                                                <select
                                                     className="w-full text-xs border border-gray-300 rounded px-1 py-1"
                                                     value={admin.auth}
                                                     onChange={(e) => handleAdminDataChange(p.id, 'auth', e.target.value)}
@@ -262,8 +262,8 @@ const ProductionOrderView: React.FC = () => {
                                                 </select>
                                             </td>
                                             <td className="px-1 py-2">
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     className="w-full text-xs border border-gray-300 rounded px-1 py-1"
                                                     value={admin.napAuth}
                                                     onChange={(e) => handleAdminDataChange(p.id, 'napAuth', e.target.value)}

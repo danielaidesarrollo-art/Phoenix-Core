@@ -77,9 +77,14 @@ export interface HandoverNote {
 }
 
 export interface User {
-    id: string;
+    id?: string;
+    documento?: string;
     nombre: string;
     correo: string;
     cargo: string;
-    rol: 'ADMIN' | 'USER';
+    rol?: 'ADMIN' | 'USER';
+    password?: string;
+    turnoInicio?: string;
+    turnoFin?: string;
+    maxPacientes?: number;
 }
