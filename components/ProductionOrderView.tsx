@@ -28,7 +28,7 @@ const ProductionOrderView: React.FC = () => {
             if (p.estado !== 'Aceptado') return false;
 
             // Must have antibiotic therapy checked
-            if (!p.terapias['Aplicación de terapia antibiótica']) return false;
+            if (!p.terapias?.['Aplicación de terapia antibiótica']) return false;
 
             // Must have antibiotic data
             if (!p.antibiotico || !p.antibiotico.medicamento) return false;

@@ -17,8 +17,11 @@ const InfoItem: React.FC<{ label: string, value: any }> = ({ label, value }) => 
 };
 
 const ProfileView: React.FC = () => {
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
-    const { user, users, updateUserInContext, updateUserInList } = useAppContext();
+    const { user } = useAppContext();
+    // TODO: Implement user management context or service
+    const updateUserInContext = (u: any) => console.log('Update context', u);
+    const updateUserInList = (u: any) => console.log('Update list', u);
+    const users: any[] = [];
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -85,28 +88,28 @@ const ProfileView: React.FC = () => {
 
             <Card title="Cambiar Clave Personal">
                 <form onSubmit={handleChangePassword} className="space-y-4">
-                    <Input 
-                        label="Clave Actual" 
-                        type="password" 
+                    <Input
+                        label="Clave Actual"
+                        type="password"
                         value={currentPassword}
                         onChange={e => setCurrentPassword(e.target.value)}
-                        required 
+                        required
                     />
-                    <Input 
-                        label="Nueva Clave" 
+                    <Input
+                        label="Nueva Clave"
                         type="password"
                         value={newPassword}
                         onChange={e => setNewPassword(e.target.value)}
-                        required 
+                        required
                     />
-                    <Input 
-                        label="Confirmar Nueva Clave" 
-                        type="password" 
+                    <Input
+                        label="Confirmar Nueva Clave"
+                        type="password"
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
-                        required 
+                        required
                     />
-                     {error && <p className="text-red-500 text-sm">{error}</p>}
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
                     {success && <p className="text-green-500 text-sm">{success}</p>}
                     <div className="pt-2">
                         <Button type="submit">Actualizar Clave</Button>

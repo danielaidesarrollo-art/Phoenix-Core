@@ -12,11 +12,13 @@ interface NavbarProps {
 const NavItem: React.FC<{ icon: React.ReactNode; label: string; isActive: boolean; onClick: () => void }> = ({ icon, label, isActive, onClick }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-brand-accent text-white' : 'text-gray-300 hover:bg-brand-lightblue hover:text-white'
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isActive
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
             }`}
     >
         {icon}
-        <span className="hidden md:inline">{label}</span>
+        <span className="hidden lg:inline">{label}</span>
     </button>
 );
 
@@ -28,43 +30,35 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
         return (typeof value === 'string' || typeof value === 'number') ? value : '';
     };
 
-    const isChiefOrCoord = user?.cargo?.toUpperCase().includes('JEFE') || user?.cargo?.toUpperCase().includes('COORDINADOR');
-
     return (
-        <nav className="bg-brand-blue shadow-md">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
-                        <span className="font-bold text-white text-xl">Virrey Solis PAD</span>
+        <nav className="sticky top-0 z-50 px-4 py-3">
+            <div className="max-w-7xl mx-auto glass-panel rounded-2xl px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <span className="text-white font-bold text-lg">P</span>
                     </div>
-                    <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-                        <NavItem icon={Icons.Home} label="Pacientes" isActive={activeView === 'dashboard'} onClick={() => onNavigate('dashboard')} />
-                        <NavItem icon={Icons.Clipboard} label="Entrega Turno" isActive={activeView === 'handover'} onClick={() => onNavigate('handover')} />
-                        <NavItem icon={Icons.Calendar} label="Agenda" isActive={activeView === 'schedule'} onClick={() => onNavigate('schedule')} />
-                        <NavItem icon={Icons.Map} label="Mapa" isActive={activeView === 'map'} onClick={() => onNavigate('map')} />
-                        <NavItem icon={Icons.Route} label="Rutas" isActive={activeView === 'routes'} onClick={() => onNavigate('routes')} />
-                        <NavItem icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>} label="DANIEL AI" isActive={activeView === 'daniel'} onClick={() => onNavigate('daniel')} />
-                        {isChiefOrCoord && (
-                            <NavItem icon={Icons.ClipboardCheck} label="Orden Prod." isActive={activeView === 'production'} onClick={() => onNavigate('production')} />
-                        )}
-                        <NavItem icon={Icons.Profile} label="Mi Perfil" isActive={activeView === 'profile'} onClick={() => onNavigate('profile')} />
-                        {user?.cargo === 'JEFE MEDICO' && (
-                            <NavItem icon={Icons.Users} label="Personal" isActive={activeView === 'staff'} onClick={() => onNavigate('staff')} />
-                        )}
+                    <span className="font-bold text-slate-800 text-lg tracking-tight hidden md:block">Phoenix Core</span>
+                </div>
+
+                <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl">
+                    <NavItem icon={Icons.Home} label="Pacientes" isActive={activeView === 'dashboard'} onClick={() => onNavigate('dashboard')} />
+                    <NavItem icon={Icons.Clipboard} label="Heridas" isActive={activeView === 'wounds'} onClick={() => onNavigate('wounds')} />
+                    <NavItem icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>} label="DANIEL AI" isActive={activeView === 'daniel'} onClick={() => onNavigate('daniel')} />
+                    <NavItem icon={Icons.Profile} label="Perfil" isActive={activeView === 'profile'} onClick={() => onNavigate('profile')} />
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <div className="text-right hidden sm:block">
+                        <p className="text-sm font-bold text-slate-800">{safeRender(user?.nombre)}</p>
+                        <p className="text-xs text-slate-500 font-medium">{safeRender(user?.cargo)}</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium text-white">{safeRender(user?.nombre)}</p>
-                            <p className="text-xs text-gray-300">{safeRender(user?.cargo)}</p>
-                        </div>
-                        <button
-                            onClick={logout}
-                            className="p-2 rounded-full text-gray-300 hover:bg-brand-lightblue hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-blue focus:ring-white"
-                            title="Cerrar Sesión"
-                        >
-                            {Icons.Logout}
-                        </button>
-                    </div>
+                    <button
+                        onClick={logout}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
+                        title="Cerrar Sesión"
+                    >
+                        {Icons.Logout}
+                    </button>
                 </div>
             </div>
         </nav>

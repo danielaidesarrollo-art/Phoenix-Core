@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { User } from '../types.ts';
 import Input from './ui/Input.tsx';
 import Button from './ui/Button.tsx';
-import { ROLES_ASISTENCIALES } from '../constants.tsx';
+import { ROLES_CLINICOS as ROLES_ASISTENCIALES } from '../constants.tsx';
 import Select from './ui/Select.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
 
@@ -35,17 +35,17 @@ const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
             return;
         }
 
-        if (users.some(u => u.documento === documento || u.correo === correo)) {
+        if (users.some((u: User) => u.documento === documento || u.correo === correo)) {
             setError('El documento o correo ya está registrado.');
             return;
         }
 
         const newUser: User = { documento, nombre, correo, institucion, cargo, password };
-        
+
         try {
             addUser(newUser);
             setSuccess('¡Registro exitoso! Ahora puede iniciar sesión.');
-            
+
             // Clear form
             setDocumento('');
             setNombre('');
@@ -55,37 +55,153 @@ const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
             setPassword('');
             setConfirmPassword('');
         } catch (err: any) {
-             setError(err.message || 'Ocurrió un error inesperado durante el registro.');
+            setError(err.message || 'Ocurrió un error inesperado durante el registro.');
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-brand-gray">
-            <div className="w-full max-w-lg p-8 space-y-6 bg-white rounded-xl shadow-lg">
-                <div>
-                    <h2 className="text-center text-3xl font-extrabold text-brand-blue">
-                        Registro de Colaborador
-                    </h2>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+            {/* Ambient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800 z-0"></div>
+            <div className="absolute inset-0 opacity-30 z-0">
+                <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600 blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600 blur-[120px]"></div>
+            </div>
+
+            <div className="w-full max-w-2xl p-8 relative z-10">
+                <div className="glass-panel rounded-2xl p-8 shadow-2xl border border-white/10 backdrop-blur-xl bg-white/10">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 mb-4 shadow-lg shadow-blue-500/30">
+                            <span className="text-3xl text-white">P</span>
+                        </div>
+                        <h2 className="text-3xl font-bold text-white tracking-tight">
+                            Registro de Colaborador
+                        </h2>
+                        <p className="mt-2 text-blue-200 text-sm font-medium">
+                            Únase al ecosistema Phoenix Core
+                        </p>
+                    </div>
+
+                    <form className="space-y-6" onSubmit={handleRegister}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Nombres y Apellidos</label>
+                                <input
+                                    type="text"
+                                    value={nombre}
+                                    onChange={e => setNombre(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="Nombre completo"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Número de Documento</label>
+                                <input
+                                    type="text"
+                                    value={documento}
+                                    onChange={e => setDocumento(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="Documento"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                                <input
+                                    type="email"
+                                    value={correo}
+                                    onChange={e => setCorreo(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="ejemplo@correo.com"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Institución</label>
+                                <input
+                                    type="text"
+                                    value={institucion}
+                                    onChange={e => setInstitucion(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="Centro de salud"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Cargo</label>
+                                <select
+                                    value={cargo}
+                                    onChange={e => setCargo(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none"
+                                    required
+                                >
+                                    <option value="" className="bg-slate-800">Seleccione su cargo</option>
+                                    {ROLES_ASISTENCIALES.map(role => (
+                                        <option key={role} value={role} className="bg-slate-800">{role}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Contraseña</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Confirmar Contraseña</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-sm flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {error}
+                            </div>
+                        )}
+
+                        {success && (
+                            <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/50 text-green-200 text-sm flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                {success}
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-4 pt-4">
+                            <button
+                                type="submit"
+                                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transform hover:-translate-y-0.5 transition-all duration-200"
+                            >
+                                Registrarse ahora
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onBackToLogin}
+                                className="w-full py-3 text-sm text-blue-300 hover:text-white transition-colors"
+                            >
+                                Volver a Inicio de Sesión
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <form className="space-y-4" onSubmit={handleRegister}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input id="nombre" label="Nombres y Apellidos" type="text" value={nombre} onChange={e => setNombre(e.target.value)} required />
-                        <Input id="documento" label="Número de Documento" type="text" value={documento} onChange={e => setDocumento(e.target.value)} required />
-                        <Input id="correo" label="Correo Electrónico" type="email" value={correo} onChange={e => setCorreo(e.target.value)} required />
-                        <Input id="institucion" label="Institución donde trabaja" type="text" value={institucion} onChange={e => setInstitucion(e.target.value)} required />
-                        <Select id="cargo" label="Cargo" options={ROLES_ASISTENCIALES} value={cargo} onChange={e => setCargo(e.target.value)} required />
-                        <Input id="password" label="Clave" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                        <Input id="confirmPassword" label="Confirmar Clave" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                    </div>
-                    
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
-                    {success && <p className="text-green-500 text-sm">{success}</p>}
-                    
-                    <div className="flex flex-col md:flex-row gap-4 pt-4">
-                        <Button type="submit" className="w-full">Registrarse</Button>
-                        <Button type="button" variant="secondary" onClick={onBackToLogin} className="w-full">Volver a Inicio de Sesión</Button>
-                    </div>
-                </form>
+                <div className="mt-6 text-center">
+                    <p className="text-white/30 text-xs">
+                        Powered by <strong>DANIEL AI</strong> &copy; 2026
+                    </p>
+                </div>
             </div>
         </div>
     );

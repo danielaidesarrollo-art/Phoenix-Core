@@ -18,7 +18,9 @@ import {
     Clipboard,
     Route,
     ClipboardCheck,
-    LogOut
+    LogOut,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 
 export const Icons = {
@@ -42,6 +44,8 @@ export const Icons = {
     Safe: <ShieldCheck size={20} />,
     Logout: <LogOut size={20} />,
     Users: <Users size={20} />,
+    Eye: <Eye size={20} />,
+    EyeOff: <EyeOff size={20} />,
 };
 
 export const DOCUMENT_TYPES = ['CC', 'TI', 'CE', 'RC', 'PEP', 'PPT'];
@@ -56,37 +60,47 @@ export const CLINICAS_ORIGEN = [
 ];
 
 export const PROGRAMAS = [
-    'Clínica de Heridas',
-    'Hospitalización Domiciliaria',
-    'Cuidado Paliativo',
-    'Terapia Física',
-    'Terapia Respiratoria'
+    'Clínica de Heridas Agudas',
+    'Clínica de Heridas Crónicas',
+    'Úlceras por Presión',
+    'Pie Diabético',
+    'Úlceras Venosas',
+    'Quemaduras',
+    'Heridas Quirúrgicas'
 ];
 
-export const TERAPIAS_HOSPITALARIO = {
-    'Aplicación de terapia antibiótica': false,
-    'Oxígeno': false,
-    'Manejo de Sondas': false,
-    'curación mayor en casa por enfermería': false,
-    'Toma de glucometrías': false,
-    'Terapia Física': false,
-    'Terapia Respiratoria': false
+export const WOUND_TREATMENTS = {
+    'Curación Avanzada': false,
+    'Desbridamiento': false,
+    'Terapia de Presión Negativa (VAC)': false,
+    'Apósitos Hidrocoloides': false,
+    'Apósitos con Plata': false,
+    'Terapia Compresiva': false,
+    'Injertos de Piel': false,
+    'Terapia con Oxígeno Hiperbárico': false
 };
 
-export const TERAPIAS_CRONICO = {
-    'Manejo de Sondas': false,
-    'curación mayor en casa por enfermería': false,
-    'Toma de glucometrías': false,
-    'Terapia Física': false,
-    'Soporte Nutricional': false
-};
+export const WOUND_TYPES = [
+    'Úlcera por Presión',
+    'Úlcera Venosa',
+    'Úlcera Arterial',
+    'Pie Diabético',
+    'Quemadura',
+    'Herida Quirúrgica',
+    'Traumática',
+    'Otra'
+];
 
-export const TERAPIAS_PALIATIVO = {
-    'Manejo de Dolor': false,
-    'Acompañamiento Psicológico': false,
-    'Cuidado de Heridas': false,
-    'Soporte Nutricional': false
-};
+export const WOUND_LOCATIONS = [
+    'Sacro',
+    'Talón',
+    'Trocánter',
+    'Maléolo',
+    'Pie',
+    'Pierna',
+    'Brazo',
+    'Otra'
+];
 
 export const ANTIBIOTICOS = [
     'Vancomicina',
@@ -138,53 +152,34 @@ export const calculateAge = (birthDate: string): number => {
     return age;
 };
 
-// Route Planning Constants
-export const EXCLUDED_FROM_ROUTES = [
-    'ADMIN',
-    'COORDINADOR GENERAL',
-    'DIRECTOR',
-    'SECRETARIA'
-];
-
-export const SERVICE_ROLE_MAPPING: Record<string, string[]> = {
-    'Aplicación de terapia antibiótica': ['AUXILIAR DE ENFERMERIA'],
-    'Oxígeno': ['AUXILIAR DE ENFERMERIA', 'MEDICO DOMICILIARIO'],
-    'Manejo de Sondas': ['AUXILIAR DE ENFERMERIA', 'MEDICO DOMICILIARIO'],
-    'curación mayor en casa por enfermería': ['AUXILIAR DE ENFERMERIA'],
-    'Toma de glucometrías': ['AUXILIAR DE ENFERMERIA'],
-    'Terapia Física': ['FISIOTERAPEUTA'],
-    'Terapia Respiratoria': ['TERAPEUTA RESPIRATORIO', 'FISIOTERAPEUTA'],
-    'Soporte Nutricional': ['NUTRICIONISTA'],
-    'Manejo de Dolor': ['MEDICO DOMICILIARIO'],
-    'Acompañamiento Psicológico': ['PSICOLOGO'],
-    'Cuidado de Heridas': ['AUXILIAR DE ENFERMERIA', 'MEDICO DOMICILIARIO']
-};
-
-// Zone Restrictions
-export const EXCLUDED_ZONES = [
-    "Zona Norte - Restricción Médica",
-    "Sector Industrial Delta",
-    "Área de Cuarentena"
-];
-
 // API Configuration
 export const API_BASE_URL = 'http://localhost:8000/api';
 
-// Map Configuration
-export const MAP_CENTER_DEFAULT = { lat: 4.624335, lng: -74.063644 };
-
-// Roles Asistenciales
-export const ROLES_ASISTENCIALES = [
-    'MEDICO DOMICILIARIO',
-    'AUXILIAR DE ENFERMERIA',
-    'ENFERMERO(A) JEFE PAD',
+// Roles Clínicos - Clínica de Heridas
+export const ROLES_CLINICOS = [
+    'MÉDICO ESPECIALISTA EN HERIDAS',
+    'ENFERMERO(A) ESPECIALIZADO',
+    'AUXILIAR DE ENFERMERÍA',
+    'NUTRICIONISTA',
     'FISIOTERAPEUTA',
-    'FONOAUDIOLOGO',
-    'TERAPEUTA OCUPACIONAL',
-    'TRABAJADOR SOCIAL',
-    'PSICOLOGO',
-    'NUTRICIONISTA'
+    'CIRUJANO PLÁSTICO'
 ];
+
+// Wound Assessment Scales
+export const PUSH_SCALE = {
+    length_width: [0, 1, 2, 3, 4, 5],
+    exudate: ['Ninguno', 'Escaso', 'Moderado', 'Abundante'],
+    tissue_type: ['Cerrado', 'Tejido Epitelial', 'Tejido de Granulación', 'Esfacelo', 'Tejido Necrótico']
+};
+
+export const BRADEN_SCALE = {
+    sensory_perception: [1, 2, 3, 4],
+    moisture: [1, 2, 3, 4],
+    activity: [1, 2, 3, 4],
+    mobility: [1, 2, 3, 4],
+    nutrition: [1, 2, 3, 4],
+    friction_shear: [1, 2, 3]
+};
 
 // Auditfarma Emails
 export const AUDITFARMA_EMAILS = [
@@ -202,3 +197,35 @@ export const MEDICAMENTOS_ALTO_RIESGO = [
     'LINEZOLID',
     'DAPTOMICINA'
 ];
+
+// Terapias por Programa
+export const TERAPIAS_HOSPITALARIO = {
+    'Aplicación de terapia antibiótica': true,
+    'Oxígeno': false,
+    'Manejo de Sondas': false,
+    'Toma de glucometrías': false,
+    'Curación de heridas': false,
+    'Terapia física': false,
+    'Terapia respiratoria': false
+};
+
+export const TERAPIAS_CRONICO = {
+    'Visita médica': true,
+    'Enfermería': true,
+    'Terapia física': false,
+    'Terapia respiratoria': false,
+    'Terapia ocupacional': false,
+    'Fonoaudiología': false,
+    'Nutrición': false,
+    'Psicología': false,
+    'Trabajo social': false
+};
+
+export const TERAPIAS_PALIATIVO = {
+    'Visita médica': true,
+    'Enfermería': true,
+    'Manejo del dolor': true,
+    'Psicología': true,
+    'Apoyo espiritual': false,
+    'Trabajo social': false
+};
