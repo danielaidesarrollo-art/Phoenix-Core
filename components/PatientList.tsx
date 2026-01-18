@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Patient } from '../types.ts';
-import { useAppContext } from '../context/AppContext.tsx';
-import Button from './ui/Button.tsx';
-import Card from './ui/Card.tsx';
-import Modal from './ui/Modal.tsx';
-import PatientIntakeForm from './PatientIntakeForm.tsx';
-import PatientCard from './PatientCard.tsx';
-import { Icons, PROGRAMAS } from '../constants.tsx';
-import Input from './ui/Input.tsx';
+import { useAppContext } from '../context/AppContext';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import Modal from './ui/Modal';
+import PatientIntakeForm from './PatientIntakeForm';
+import PatientCard from './PatientCard';
+import { Icons, PROGRAMAS } from '../constants';
+import Input from './ui/Input';
 
 const PatientList: React.FC = () => {
     const { patients, addPatient, updatePatient } = useAppContext();

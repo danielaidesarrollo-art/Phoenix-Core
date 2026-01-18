@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext';
 import { User, Patient } from '../types.ts';
-import Card from './ui/Card.tsx';
-import Button from './ui/Button.tsx';
-import Input from './ui/Input.tsx';
-import Select from './ui/Select.tsx';
-import { EXCLUDED_FROM_ROUTES, calculateAge, SERVICE_ROLE_MAPPING } from '../constants.tsx';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import { EXCLUDED_FROM_ROUTES, calculateAge, SERVICE_ROLE_MAPPING } from '../constants';
 import { calculateDistance, COVERAGE_POLYGON } from '../utils/geolocation.ts';
 
 declare global {

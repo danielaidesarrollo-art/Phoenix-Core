@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Patient, HandoverNote } from '../types.ts';
-import Button from './ui/Button.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
-import { calculateAge } from '../constants.tsx';
-import Modal from './ui/Modal.tsx';
+import Button from './ui/Button';
+import { useAppContext } from '../context/AppContext';
+import { calculateAge } from '../constants';
+import Modal from './ui/Modal';
 
 interface PatientCardProps {
     patient: Patient;

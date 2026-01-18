@@ -1,16 +1,16 @@
 
 
 import React, { useState, useEffect } from 'react';
-import Navbar from './Navbar.tsx';
-import PatientList from './PatientList.tsx';
-import HandoverForm from './HandoverForm.tsx';
-import ScheduleView from './ScheduleView.tsx';
-import ProfileView from './ProfileView.tsx';
-import MapView from './MapView.tsx';
-import RoutePlanner from './RoutePlanner.tsx';
-import StaffManagement from './StaffManagement.tsx';
-import ProductionOrderView from './ProductionOrderView.tsx'; // New Import
-import DanielView from './Daniel/DanielView.tsx';
+import Navbar from './Navbar';
+import PatientList from './PatientList';
+import HandoverForm from './HandoverForm';
+import ScheduleView from './ScheduleView';
+import ProfileView from './ProfileView';
+import MapView from './MapView';
+import RoutePlanner from './RoutePlanner';
+import StaffManagement from './StaffManagement';
+import ProductionOrderView from './ProductionOrderView'; // New Import
+import DanielView from './Daniel/DanielView';
 
 const Dashboard: React.FC = () => {
     const [activeView, setActiveView] = useState('dashboard');
@@ -23,6 +23,11 @@ const Dashboard: React.FC = () => {
             setActiveView('dashboard');
         }
     }, [activeView]);
+
+    useEffect(() => {
+        import('../utils/safeCore.ts').then(m => m.SessionValidator.checkPulse());
+    }, []);
+
 
 
     const renderView = () => {

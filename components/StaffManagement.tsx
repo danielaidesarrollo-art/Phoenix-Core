@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext';
 import { User } from '../types.ts';
-import Card from './ui/Card.tsx';
-import Input from './ui/Input.tsx';
-import Select from './ui/Select.tsx';
-import Button from './ui/Button.tsx';
-import { ROLES_ASISTENCIALES, Icons } from '../constants.tsx';
+import Card from './ui/Card';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Button from './ui/Button';
+import { ROLES_ASISTENCIALES, Icons } from '../constants';
 
 const StaffManagement: React.FC = () => {
     const { users, addUser, updateUserInList, removeUser } = useAppContext();

@@ -1,9 +1,9 @@
 
 import React, { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext';
 import { Patient } from '../types.ts';
-import Card from './ui/Card.tsx';
-import { calculateAge } from '../constants.tsx';
+import Card from './ui/Card';
+import { calculateAge } from '../constants';
 
 interface Appointment {
     patientName: string;

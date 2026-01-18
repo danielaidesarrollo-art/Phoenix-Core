@@ -1,82 +1,56 @@
 
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import Input from './ui/Input.tsx';
-import Button from './ui/Button.tsx';
-import { Icons } from '../constants.tsx';
-import Register from './Register.tsx';
+import { useAppContext } from '../context/AppContext';
+import Input from './ui/Input';
+import Button from './ui/Button';
+import { Icons } from '../constants';
+import Register from './Register';
 
 const Login: React.FC = () => {
-    const [documento, setDocumento] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
-    const { login, users } = useAppContext();
-
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (!users || users.length === 0) {
-            setError("No se encontraron datos de usuario. Por favor, regístrese o contacte a soporte.");
-            return;
-        }
-
-        const user = users.find(u => u.documento === documento && u.password === password);
-        
-        if (user) {
-            login(user);
-        } else {
-            setError('Documento o clave incorrecta.');
-        }
+    const handlePolarisRedirect = () => {
+        // In a real environment, this would redirect to the Polaris (BioCore) URL
+        // with a return_url parameter. For this simulation, we'll open it in a new window/tab
+        // or simply show the Polaris intent.
+        window.location.href = 'http://localhost:5173'; // Assuming Polaris (BioCore) runs here
     };
 
-    if (isRegistering) {
-        return <Register onBackToLogin={() => setIsRegistering(false)} />;
-    }
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-brand-gray">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-lg">
-                <div>
-                    <h2 className="text-center text-3xl font-extrabold text-brand-blue">
-                        Iniciar Sesión
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1a1f2e] to-[#252b3d]">
+            <div className="w-full max-w-md p-10 space-y-8 glass-panel rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+
+                <div className="flex flex-col items-center">
+                    <img src="/assets/logo.png" alt="Phoenix Logo" className="h-32 w-auto mb-8 drop-shadow-[0_0_20px_rgba(0,163,255,0.4)]" />
+                    <h2 className="text-center text-4xl font-black text-white tracking-tight">
+                        Phoenix Core
                     </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        Módulo de Ingreso de Pacientes
+                    <p className="mt-4 text-center text-sm text-blue-400 font-bold uppercase tracking-[0.25em]">
+                        Wound Clinic Diagnostic Program
                     </p>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-                    <Input
-                        id="documento"
-                        label="Número de Documento"
-                        type="text"
-                        value={documento}
-                        onChange={(e) => setDocumento(e.target.value)}
-                        required
-                        icon={Icons.User}
-                    />
-                    <Input
-                        id="password"
-                        label="Clave Personal"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        icon={Icons.Lock}
-                    />
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
-                    <div>
-                        <Button type="submit" className="w-full">
-                            Ingresar
-                        </Button>
+
+                <div className="pt-8 space-y-6">
+                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-center">
+                        <p className="text-xs text-blue-200/70 leading-relaxed">
+                            Security Policy: All access to Phoenix Core must be verified through the **Polaris Centralized Gateway**.
+                        </p>
                     </div>
-                </form>
-                <div className="text-center text-sm">
-                    <button onClick={() => setIsRegistering(true)} className="font-medium text-brand-lightblue hover:text-brand-blue">
-                        ¿Nuevo colaborador? Regístrese aquí
+
+                    <button
+                        onClick={handlePolarisRedirect}
+                        className="group relative flex w-full h-16 items-center justify-center overflow-hidden rounded-xl bg-primary text-background-dark font-bold text-lg transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(0,240,255,0.3)]"
+                    >
+                        <span className="relative z-10 flex items-center gap-3">
+                            <span className="material-symbols-outlined font-bold">fingerprint</span>
+                            Authenticate via Polaris
+                        </span>
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
                     </button>
+
+                    <div className="flex items-center justify-center gap-2 pt-4 opacity-40">
+                        <span className="material-symbols-outlined text-xs">verified_user</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">L3 Compliance Active</span>
+                    </div>
                 </div>
             </div>
         </div>

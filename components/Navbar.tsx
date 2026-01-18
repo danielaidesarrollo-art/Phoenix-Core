@@ -1,8 +1,7 @@
 
-
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Icons } from '../constants.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Icons } from '../constants';
 
 interface NavbarProps {
     onNavigate: (view: string) => void;
@@ -21,7 +20,6 @@ const NavItem: React.FC<{ icon: React.ReactNode; label: string; isActive: boolea
 );
 
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
     const { user, logout } = useAppContext();
 
     const safeRender = (value: any) => {
@@ -34,8 +32,9 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
         <nav className="bg-brand-blue shadow-md">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
-                        <span className="font-bold text-white text-xl">Virrey Solis PAD</span>
+                    <div className="flex items-center gap-2">
+                        <img src="/assets/logo.png" alt="Phoenix Logo" className="h-10 w-auto" />
+                        <span className="font-bold text-white text-xl">Phoenix Core</span>
                     </div>
                     <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                         <NavItem icon={Icons.Home} label="Pacientes" isActive={activeView === 'dashboard'} onClick={() => onNavigate('dashboard')} />

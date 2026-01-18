@@ -1,13 +1,13 @@
 
 
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext';
 import { HandoverNote } from '../types.ts';
-import Card from './ui/Card.tsx';
-import Button from './ui/Button.tsx';
-import Input from './ui/Input.tsx';
-import Select from './ui/Select.tsx';
-import { GUIA_INFUSION_ANTIBIOTICOS, ANTIBIOTICOS, OXIGENO_DISPOSITIVOS } from '../constants.tsx';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import { GUIA_INFUSION_ANTIBIOTICOS, ANTIBIOTICOS, OXIGENO_DISPOSITIVOS } from '../constants';
 
 // --- Constants based on the Google Form ---
 const VITAL_SIGNS_OPTIONS = ["Tomado y Registrado en Historia Clinica", "No se toma por orden médica", "Paciente no permite la toma"];

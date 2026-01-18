@@ -1,11 +1,11 @@
 
 
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { calculateAge, AUDIFARMA_EMAILS, MEDICAMENTOS_ALTO_RIESGO } from '../constants.tsx';
-import Card from './ui/Card.tsx';
-import Button from './ui/Button.tsx';
-import Input from './ui/Input.tsx';
+import { useAppContext } from '../context/AppContext';
+import { calculateAge, AUDIFARMA_EMAILS, MEDICAMENTOS_ALTO_RIESGO } from '../constants';
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
 
 const ProductionOrderView: React.FC = () => {
     const { patients, user } = useAppContext();

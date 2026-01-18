@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { User } from '../types.ts';
-import Input from './ui/Input.tsx';
-import Button from './ui/Button.tsx';
-import { ROLES_ASISTENCIALES } from '../constants.tsx';
-import Select from './ui/Select.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import Input from './ui/Input';
+import Button from './ui/Button';
+import { ROLES_ASISTENCIALES } from '../constants';
+import Select from './ui/Select';
+import { useAppContext } from '../context/AppContext';
 
 interface RegisterProps {
     onBackToLogin: () => void;

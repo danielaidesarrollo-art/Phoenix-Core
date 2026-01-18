@@ -1,0 +1,28 @@
+steps:
+  # Build the unified container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/phoenix-core', '.']
+
+  # Push the container image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/phoenix-core']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'phoenix-core'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/phoenix-core'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'SAFECORE_CLIENT_SECRET=test-secret-123'
+
+images:
+  - 'gcr.io/$PROJECT_ID/phoenix-core'
