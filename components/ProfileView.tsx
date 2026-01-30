@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import Card from './ui/Card.tsx';
-import Input from './ui/Input.tsx';
-import Button from './ui/Button.tsx';
+import { useAppContext } from '../context/AppContext';
+import Card from './ui/Card';
+import Input from './ui/Input';
+import Button from './ui/Button';
 
 // Helper component to safely render user data that might be malformed in localStorage
 const InfoItem: React.FC<{ label: string, value: any }> = ({ label, value }) => {

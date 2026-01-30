@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User } from '../types.ts';
 import Input from './ui/Input.tsx';
@@ -8,11 +7,10 @@ import Select from './ui/Select.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
 
 interface RegisterProps {
-    onBackToLogin: () => void;
+    onBack: () => void;
 }
 
-const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
+const Register: React.FC<RegisterProps> = ({ onBack }) => {
     const { users, addUser } = useAppContext();
 
     const [documento, setDocumento] = useState('');
@@ -189,7 +187,7 @@ const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
                             </button>
                             <button
                                 type="button"
-                                onClick={onBackToLogin}
+                                onClick={onBack}
                                 className="w-full py-3 text-sm text-blue-300 hover:text-white transition-colors"
                             >
                                 Volver a Inicio de Sesión

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { calculateAge, AUDITFARMA_EMAILS, MEDICAMENTOS_ALTO_RIESGO } from '../constants.tsx';

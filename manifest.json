@@ -1,0 +1,13 @@
+{
+    "project_name": "Daniel_AI_Phoenix",
+    "project_id": "00000000-0000-0000-0000-000000000101",
+    "compliance_level": "L3",
+    "features": {
+        "clinical_management": true,
+        "wound_analysis": true,
+        "encryption": true
+    },
+    "contacts": [
+        "phoenix-dev@daniel.ai"
+    ]
+}

@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Patient, AntibioticTreatment } from '../types.ts';
-import { useAppContext } from '../context/AppContext.tsx';
-import Input from './ui/Input.tsx';
-import Select from './ui/Select.tsx';
-import Button from './ui/Button.tsx';
-import Card from './ui/Card.tsx';
-import { DOCUMENT_TYPES, CLINICAS_ORIGEN, PROGRAMAS, TERAPIAS_HOSPITALARIO, TERAPIAS_CRONICO, TERAPIAS_PALIATIVO, ANTIBIOTICOS, OXIGENO_DISPOSITIVOS, SONDA_TIPOS, GLUCOMETRIA_FRECUENCIAS, calculateAge } from '../constants.tsx';
+import { useAppContext } from '../context/AppContext';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import { DOCUMENT_TYPES, CLINICAS_ORIGEN, PROGRAMAS, TERAPIAS_HOSPITALARIO, TERAPIAS_CRONICO, TERAPIAS_PALIATIVO, ANTIBIOTICOS, OXIGENO_DISPOSITIVOS, SONDA_TIPOS, GLUCOMETRIA_FRECUENCIAS, calculateAge } from '../constants';
 import { isPointInPolygon, geocodeAddress, COVERAGE_POLYGON } from '../utils/geolocation.ts';
 
 interface PatientIntakeFormProps {

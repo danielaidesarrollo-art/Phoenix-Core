@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icons } from '../../constants';
 
 interface ModalProps {
     isOpen: boolean;
@@ -9,14 +10,29 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-bold">{title}</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 transition-opacity" onClick={onClose}>
+                    <div className="absolute inset-0 bg-gray-500/75 opacity-75 backdrop-blur-sm"></div>
                 </div>
-                <div className="p-6">{children}</div>
+
+                <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+                <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div className="flex justify-between items-center mb-4 border-b pb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 leading-6">{title}</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-500 transition-colors">
+                                {Icons.Close || '✕'}
+                            </button>
+                        </div>
+                        <div className="mt-2">
+                            {children}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

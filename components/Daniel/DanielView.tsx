@@ -6,6 +6,7 @@ import Modal from '../ui/Modal.tsx';
 import { woundAnalysisService, WoundAnalysisResult } from '../../services/woundAnalysis.service.ts';
 import { WoundRecord, WoundAssessment } from '../../types.ts';
 import { Icons } from '../../constants.tsx';
+import WoundClinicConsole from '../WoundClinic/WoundClinicConsole';
 
 const DanielView: React.FC = () => {
     const { patients, wounds, addWound, updateWound, addClinicalNote, user, isBioCoreAuthenticated, validateBioCoreAuth } = useAppContext();
@@ -20,6 +21,7 @@ const DanielView: React.FC = () => {
     const [selectedWound, setSelectedWound] = useState<string>('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [manualEntry, setManualEntry] = useState('');
 
     const activePatients = patients.filter(p => p.estado === 'Activo');
     const patientWounds = wounds.filter(w => w.patientId === selectedPatient);
@@ -28,7 +30,7 @@ const DanielView: React.FC = () => {
         if (!isARMode) {
             if (!isBioCoreAuthenticated) {
                 const bioData = prompt("Biometric Signature Required (BioCore). Enter 'auth' to proceed:");
-                if (!bioData || !await validateBioCoreAuth(bioData)) {
+                if (!bioData || !await validateBioCoreAuth(bioData || '')) {
                     alert("BioCore Authentication Failed. AR Mode restricted.");
                     return;
                 }
@@ -71,14 +73,13 @@ const DanielView: React.FC = () => {
             const ctx = canvas.getContext('2d');
             if (ctx) {
                 ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1); // Flip back to normal for analysis
+                ctx.scale(-1, 1);
                 ctx.drawImage(videoRef.current, 0, 0);
                 canvas.toBlob((blob) => {
                     if (blob) {
                         const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
                         setSelectedImage(file);
                         setImagePreview(URL.createObjectURL(blob));
-                        // Auto-analyze after capture
                         handleAnalyze();
                     }
                 }, 'image/jpeg');
@@ -91,8 +92,6 @@ const DanielView: React.FC = () => {
         if (file) {
             setSelectedImage(file);
             setError(null);
-
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
@@ -102,8 +101,8 @@ const DanielView: React.FC = () => {
     };
 
     const handleAnalyze = async () => {
-        if (!selectedImage) {
-            setError('Por favor selecciona una imagen');
+        if (!selectedImage && !manualEntry) {
+            setError('Por favor selecciona una imagen o describe el estado');
             return;
         }
 
@@ -111,7 +110,7 @@ const DanielView: React.FC = () => {
         setError(null);
 
         try {
-            const result = await woundAnalysisService.analyzeWoundImage(selectedImage);
+            const result = await woundAnalysisService.analyzeWoundImage(selectedImage || new File([], "manual.jpg"));
             setAnalysisResult(result);
             setIsModalOpen(true);
         } catch (err) {
@@ -136,7 +135,7 @@ const DanielView: React.FC = () => {
             evaluadorRol: 'IA - Análisis Multimodal',
             largo: analysisResult.measurements.estimatedLength,
             ancho: analysisResult.measurements.estimatedWidth,
-            profundidad: 0, // Not measured from image
+            profundidad: 0,
             area: analysisResult.measurements.estimatedArea,
             tipoTejido: `Granulación: ${analysisResult.tissueComposition.granulation}%, Esfacelo: ${analysisResult.tissueComposition.slough}%`,
             exudado: 'No determinado por imagen',
@@ -162,7 +161,6 @@ const DanielView: React.FC = () => {
         };
 
         if (selectedWound) {
-            // Update existing wound
             const wound = wounds.find(w => w.id === selectedWound);
             if (wound) {
                 updateWound({
@@ -171,7 +169,6 @@ const DanielView: React.FC = () => {
                 });
             }
         } else {
-            // Create new wound
             const newWound: WoundRecord = {
                 id: assessment.woundId,
                 patientId: selectedPatient,
@@ -185,7 +182,6 @@ const DanielView: React.FC = () => {
             addWound(newWound);
         }
 
-        // Add clinical note
         addClinicalNote({
             id: `N${Date.now()}`,
             patientId: selectedPatient,
@@ -194,7 +190,7 @@ const DanielView: React.FC = () => {
             authorRole: 'Sistema de IA',
             timestamp: new Date().toISOString(),
             tipo: 'Evaluación',
-            nota: `Análisis automático de herida:\n- Tipo: ${analysisResult.woundType}\n- Severidad: ${analysisResult.severity}\n- Recomendaciones: ${analysisResult.recommendations.join(', ')}`,
+            note: `Análisis automático de herida:\n- Tipo: ${analysisResult.woundType}\n- Severidad: ${analysisResult.severity}\n- Recomendaciones: ${analysisResult.recommendations.join(', ')}`,
         });
 
         setIsModalOpen(false);
@@ -212,11 +208,17 @@ const DanielView: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">DANIEL AI - Wound Care</h1>
-                    <p className="text-gray-600 mt-1">Análisis Multimodal con Google Gemini & Med-Gemma</p>
+            <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-blue-100">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-blue-600 text-white rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">DANIEL AI - Wound Clinic</h1>
+                        <p className="text-sm text-gray-500">Diagnostic Station // Vega Scale Protocol</p>
+                    </div>
                 </div>
                 <div className="flex gap-4">
                     <Button
@@ -234,97 +236,53 @@ const DanielView: React.FC = () => {
                 </div>
             </div>
 
-            {/* AR Mode Overlay */}
             {isARMode && (
                 <div className="fixed inset-0 z-50 bg-black">
-                    <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        className="camera-feed"
-                    />
-
-                    <div className="hud-overlay">
-                        {/* Top Bar: Patient & Security */}
+                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                    <div className="hud-overlay fixed inset-0 p-8 flex flex-col justify-between pointer-events-none text-white">
                         <div className="flex justify-between w-full">
-                            <div className="hud-corner hud-glass hud-accent-border">
+                            <div className="bg-black/40 backdrop-blur-md p-4 rounded-lg border border-white/20">
                                 <div className="text-xs uppercase opacity-80 mb-1">Paciente Triage</div>
                                 <div className="text-lg font-bold">
                                     {selectedPatient ? activePatients.find(p => p.id === selectedPatient)?.nombreCompleto : 'No seleccionado'}
                                 </div>
-                                <div className="text-xs opacity-60">ID: {selectedPatient || '---'}</div>
                             </div>
-
-                            <div className="hud-corner hud-glass text-right">
-                                <div className="flex items-center justify-end gap-2 mb-1 text-xs">
-                                    <img src="/assets/biocore_logo.jpg" alt="BioCore Logo" className="h-6 w-6 rounded-full border border-white/40" />
-                                    <span className="font-bold tracking-wider">POLARIS SECURE</span>
-                                </div>
-                                {user && (
-                                    <div className="text-sm font-medium">{user.nombre}</div>
-                                )}
-                                <div className="text-[10px] opacity-70">{user?.cargo}</div>
+                            <div className="bg-black/40 backdrop-blur-md p-4 rounded-lg border border-white/20 text-right">
+                                <div className="text-sm font-medium">POLARIS SECURE</div>
+                                <div className="text-xs opacity-70">{user?.nombre}</div>
                             </div>
                         </div>
 
-                        {/* Bottom Bar: Analysis & Actions */}
-                        <div className="flex justify-between items-end w-full">
-                            <div className="hud-corner">
-                                {analysisResult && (
-                                    <div className="hud-glass hud-accent-border animate-fade-in">
-                                        <div className="text-xs uppercase opacity-80 mb-2">Resumen IA</div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                            <div>Severidad: <span className="text-yellow-400 font-bold">{analysisResult.severity}</span></div>
-                                            <div>Confianza: <span className="text-blue-400 font-bold">{analysisResult.confidence}%</span></div>
-                                            <div className="col-span-2">Tipo: <span className="font-bold">{analysisResult.woundType}</span></div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="hud-corner flex justify-end gap-3 pointer-events-auto">
-                                <button
-                                    onClick={toggleARMode}
-                                    className="p-4 rounded-full bg-red-600/60 backdrop-blur-md border border-white/20 text-white hover:bg-red-700/80 transition-all"
-                                >
-                                    {Icons.EyeOff}
-                                </button>
-                                <button
-                                    onClick={captureImageFromAR}
-                                    disabled={isAnalyzing}
-                                    className="p-6 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white hover:bg-white/40 transition-all scale-110"
-                                >
-                                    {isAnalyzing ? (
-                                        <div className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full" />
-                                    ) : (
-                                        <div className="w-6 h-6 rounded-full border-4 border-white" />
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Central Sight Mask (Virtual Crosshair) */}
-                    <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
-                        <div className="w-16 h-16 border-2 border-white/20 rounded-full flex items-center justify-center">
-                            <div className="w-1 h-1 bg-white/40 rounded-full" />
+                        <div className="flex justify-center gap-6 pointer-events-auto mb-8">
+                            <button
+                                onClick={toggleARMode}
+                                className="p-4 rounded-full bg-red-600/60 backdrop-blur-md border border-white/20 text-white"
+                            >
+                                {Icons.EyeOff}
+                            </button>
+                            <button
+                                onClick={captureImageFromAR}
+                                disabled={isAnalyzing}
+                                className="p-6 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white scale-110"
+                            >
+                                <div className="w-6 h-6 rounded-full border-4 border-white" />
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Main Analysis Section (only show if not in AR) */}
             {!isARMode && (
                 <>
+                    <div className="mb-6">
+                        <WoundClinicConsole />
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Left: Image Upload & Analysis */}
-                        <Card title="📸 Análisis de Imagen">
+                        <Card title="📸 Análisis de Imagen e IA">
                             <div className="space-y-4">
-                                {/* Patient Selection */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Seleccionar Paciente
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Seleccionar Paciente</label>
                                     <select
                                         value={selectedPatient}
                                         onChange={(e) => {
@@ -335,112 +293,59 @@ const DanielView: React.FC = () => {
                                     >
                                         <option value="">-- Seleccione un paciente --</option>
                                         {activePatients.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.nombreCompleto} ({p.id})
-                                            </option>
+                                            <option key={p.id} value={p.id}>{p.nombreCompleto} ({p.id})</option>
                                         ))}
                                     </select>
                                 </div>
 
-                                {/* Wound Selection (optional) */}
-                                {selectedPatient && patientWounds.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Herida Existente (opcional)
-                                        </label>
-                                        <select
-                                            value={selectedWound}
-                                            onChange={(e) => setSelectedWound(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">-- Nueva herida --</option>
-                                            {patientWounds.map(w => (
-                                                <option key={w.id} value={w.id}>
-                                                    {w.tipo} - {w.localizacion} ({w.estado})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                {/* Image Upload */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Cargar Imagen de Herida
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Cargar Imagen o Describir</label>
                                     <input
                                         type="file"
                                         accept="image/*"
                                         onChange={handleImageSelect}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
+                                    />
+                                    <textarea
+                                        className="w-full p-2 border rounded-md h-24"
+                                        value={manualEntry}
+                                        onChange={(e) => setManualEntry(e.target.value)}
+                                        placeholder="Descripción manual del estado para análisis IA..."
                                     />
                                 </div>
 
-                                {/* Image Preview */}
                                 {imagePreview && (
                                     <div className="mt-4">
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="w-full h-64 object-contain border-2 border-gray-300 rounded-lg"
-                                        />
+                                        <img src={imagePreview} alt="Preview" className="w-full h-48 object-contain border-2 border-gray-300 rounded-lg" />
                                     </div>
                                 )}
 
-                                {/* Error Display */}
-                                {error && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                                        {error}
-                                    </div>
-                                )}
+                                {error && <div className="text-red-600 text-sm">{error}</div>}
 
-                                {/* Analyze Button */}
                                 <Button
                                     onClick={handleAnalyze}
-                                    disabled={!selectedImage || isAnalyzing}
+                                    disabled={(!selectedImage && !manualEntry) || isAnalyzing}
                                     className="w-full"
                                 >
-                                    {isAnalyzing ? (
-                                        <>
-                                            <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            Analizando con IA...
-                                        </>
-                                    ) : (
-                                        <>
-                                            {Icons.Search}
-                                            Analizar Herida con IA
-                                        </>
-                                    )}
+                                    {isAnalyzing ? 'Analizando con IA...' : 'Analizar con DANIEL_AI'}
                                 </Button>
                             </div>
                         </Card>
 
-                        {/* Right: Statistics & Info */}
                         <div className="space-y-4">
-                            <Card title="🧬 Capacidades de Análisis">
+                            <Card title="🧬 Protocolos Activos">
                                 <ul className="space-y-3 text-sm">
-                                    <li className="flex items-start">
-                                        <span className="text-green-500 mr-2">✓</span>
-                                        <span><strong>Identificación de Tejido:</strong> Granulación, esfacelo, necrosis, epitelización</span>
+                                    <li className="flex gap-2 text-green-700">
+                                        <span className="font-bold">✓</span>
+                                        <span>Validación HIPAA en tiempo real</span>
                                     </li>
-                                    <li className="flex items-start">
-                                        <span className="text-green-500 mr-2">✓</span>
-                                        <span><strong>Mediciones:</strong> Estimación de dimensiones y área</span>
+                                    <li className="flex gap-2 text-green-700">
+                                        <span className="font-bold">✓</span>
+                                        <span>Detección de Patrones de Infección (Vega 2.0)</span>
                                     </li>
-                                    <li className="flex items-start">
-                                        <span className="text-green-500 mr-2">✓</span>
-                                        <span><strong>Clasificación:</strong> Tipo de herida y severidad</span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <span className="text-green-500 mr-2">✓</span>
-                                        <span><strong>Riesgo:</strong> Evaluación de infección</span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <span className="text-green-500 mr-2">✓</span>
-                                        <span><strong>Recomendaciones:</strong> Apósitos y terapias con Med-Gemma</span>
+                                    <li className="flex gap-2 text-green-700">
+                                        <span className="font-bold">✓</span>
+                                        <span>Análisis Multimodal Google Gemini</span>
                                     </li>
                                 </ul>
                             </Card>
@@ -449,157 +354,48 @@ const DanielView: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-blue-50 p-4 rounded-lg">
                                         <div className="text-2xl font-bold text-blue-600">{wounds.length}</div>
-                                        <div className="text-sm text-gray-600">Heridas Registradas</div>
+                                        <div className="text-sm text-gray-600">Heridas</div>
                                     </div>
                                     <div className="bg-green-50 p-4 rounded-lg">
                                         <div className="text-2xl font-bold text-green-600">
                                             {wounds.reduce((sum, w) => sum + w.assessments.length, 0)}
                                         </div>
-                                        <div className="text-sm text-gray-600">Evaluaciones Totales</div>
+                                        <div className="text-sm text-gray-600">Evaluaciones</div>
                                     </div>
                                 </div>
                             </Card>
                         </div>
                     </div>
 
-                    {/* Analysis Results Modal */}
                     <Modal
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
-                        title="Resultados del Análisis con IA"
+                        title="Resultados del Análisis DANIEL_AI"
                     >
                         {analysisResult && (
-                            <div className="space-y-6">
-                                {/* Tissue Composition */}
-                                <div>
-                                    <h3 className="font-bold text-lg mb-3">Composición de Tejido</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span>Granulación (tejido sano)</span>
-                                                <span className="font-bold">{analysisResult.tissueComposition.granulation}%</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className={`h-2 rounded-full ${getTissueColor(analysisResult.tissueComposition.granulation)}`}
-                                                    style={{ width: `${analysisResult.tissueComposition.granulation}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span>Esfacelo</span>
-                                                <span className="font-bold">{analysisResult.tissueComposition.slough}%</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className="bg-yellow-500 h-2 rounded-full"
-                                                    style={{ width: `${analysisResult.tissueComposition.slough}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span>Tejido Necrótico</span>
-                                                <span className="font-bold">{analysisResult.tissueComposition.necrotic}%</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className="bg-black h-2 rounded-full"
-                                                    style={{ width: `${analysisResult.tissueComposition.necrotic}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Measurements */}
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-blue-50 p-3 rounded">
-                                        <div className="text-sm text-gray-600">Largo</div>
-                                        <div className="text-xl font-bold">{analysisResult.measurements.estimatedLength} cm</div>
-                                    </div>
-                                    <div className="bg-blue-50 p-3 rounded">
-                                        <div className="text-sm text-gray-600">Ancho</div>
-                                        <div className="text-xl font-bold">{analysisResult.measurements.estimatedWidth} cm</div>
-                                    </div>
-                                    <div className="bg-blue-50 p-3 rounded">
-                                        <div className="text-sm text-gray-600">Área</div>
-                                        <div className="text-xl font-bold">{analysisResult.measurements.estimatedArea} cm²</div>
-                                    </div>
-                                </div>
-
-                                {/* Classification */}
+                            <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="text-sm text-gray-600">Tipo de Herida</div>
-                                        <div className="font-bold text-lg">{analysisResult.woundType}</div>
+                                    <div className="bg-blue-50 p-3 rounded">
+                                        <div className="text-xs text-gray-600">Severidad</div>
+                                        <div className="font-bold">{analysisResult.severity}</div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-600">Severidad</div>
-                                        <div className={`font-bold text-lg ${analysisResult.severity === 'Leve' ? 'text-green-600' :
-                                            analysisResult.severity === 'Moderada' ? 'text-yellow-600' :
-                                                'text-red-600'
-                                            }`}>{analysisResult.severity}</div>
+                                    <div className="bg-blue-50 p-3 rounded">
+                                        <div className="text-xs text-gray-600">Tipo</div>
+                                        <div className="font-bold">{analysisResult.woundType}</div>
                                     </div>
                                 </div>
-
-                                {/* Recommendations */}
                                 <div>
-                                    <h3 className="font-bold text-lg mb-2">Recomendaciones de Tratamiento</h3>
-                                    <ul className="list-disc list-inside space-y-1 text-sm">
-                                        {analysisResult.recommendations.map((rec, idx) => (
-                                            <li key={idx}>{rec}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Suggested Dressings */}
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Apósitos Sugeridos (Med-Gemma)</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {analysisResult.suggestedDressings.map((dressing, idx) => (
-                                            <span key={idx} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
-                                                {dressing}
-                                            </span>
-                                        ))}
+                                    <h3 className="font-bold mb-2">Composición sugerida</h3>
+                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${analysisResult.tissueComposition.granulation}%` }} />
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                        Granulación: {analysisResult.tissueComposition.granulation}% | Esfacelo: {analysisResult.tissueComposition.slough}%
                                     </div>
                                 </div>
-
-                                {/* Suggested Therapies */}
-                                <div>
-                                    <h3 className="font-bold text-lg mb-2">Terapias Sugeridas</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {analysisResult.suggestedTherapies.map((therapy, idx) => (
-                                            <span key={idx} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                                                {therapy}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Confidence */}
-                                <div className="bg-gray-50 p-3 rounded">
-                                    <div className="text-sm text-gray-600 mb-1">Confianza del Análisis</div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className="bg-blue-600 h-2 rounded-full"
-                                                style={{ width: `${analysisResult.confidence}%` }}
-                                            />
-                                        </div>
-                                        <span className="font-bold">{analysisResult.confidence}%</span>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
                                 <div className="flex gap-3 justify-end pt-4 border-t">
-                                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button onClick={handleSaveAssessment} disabled={!selectedPatient}>
-                                        Guardar Evaluación
-                                    </Button>
+                                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                                    <Button onClick={handleSaveAssessment} disabled={!selectedPatient}>Guardar Evaluación</Button>
                                 </div>
                             </div>
                         )}

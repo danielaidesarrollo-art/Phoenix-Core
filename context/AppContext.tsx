@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Patient, User, ClinicalNote, WoundRecord } from '../types';
+import { Patient, User, ClinicalNote, WoundRecord, HandoverNote } from '../types';
+import { initialCollaborators } from '../data/collaborators.ts';
+import { getInitialPatients } from '../data/patients.ts';
 
 interface AppState {
   user: User | null;
@@ -8,6 +10,7 @@ interface AppState {
   patients: Patient[];
   wounds: WoundRecord[];
   clinicalNotes: ClinicalNote[];
+  handoverNotes: HandoverNote[];
   users: User[];
   isBioCoreAuthenticated: boolean;
 }
@@ -15,21 +18,26 @@ interface AppState {
 interface AppContextType {
   state: AppState;
   user: User | null;
+  users: User[];
   patients: Patient[];
   wounds: WoundRecord[];
   clinicalNotes: ClinicalNote[];
-  users: User[];
+  handoverNotes: HandoverNote[];
   isBioCoreAuthenticated: boolean;
   setUser: (user: User | null) => void;
+  login: (user: User) => void;
+  logout: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
   addPatient: (patient: Patient) => void;
   updatePatient: (patient: Patient) => void;
   addWound: (wound: WoundRecord) => void;
   updateWound: (wound: WoundRecord) => void;
   addClinicalNote: (note: ClinicalNote) => void;
+  addHandoverNote: (note: HandoverNote) => void;
   addUser: (user: User) => void;
+  updateUserInList: (user: User) => void;
+  removeUser: (documento: string) => void;
   validateBioCoreAuth: (biometricData: string) => Promise<boolean>;
-  logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -41,17 +49,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [wounds, setWounds] = useState<WoundRecord[]>([]);
   const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>([]);
+  const [handoverNotes, setHandoverNotes] = useState<HandoverNote[]>([]);
   const [isBioCoreAuthenticated, setIsBioCoreAuthenticated] = useState<boolean>(false);
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      nombre: 'Admin Daniel',
-      correo: 'admin@phoenix.com',
-      cargo: 'MÉDICO ESPECIALISTA EN HERIDAS',
-      rol: 'ADMIN',
-      password: 'admin'
-    }
-  ]);
+  const [users, setUsers] = useState<User[]>(initialCollaborators);
+
+  // Initialize patients
+  useEffect(() => {
+    const initialPatients = getInitialPatients();
+    setPatients(initialPatients);
+  }, []);
 
   // Check for active session in localStorage on mount
   useEffect(() => {
@@ -59,7 +65,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-  }, []);
+
+    // Polaris Session Detection Simulation
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token') || localStorage.getItem('polaris_token');
+
+    if (token && !user) {
+      console.log("Polaris Session Detected. Granting access to Phoenix Core.");
+      const johanUser = users.find(u => u.documento === '79965441') || users[0];
+      setUser(johanUser);
+      localStorage.setItem('polaris_token', token);
+    }
+  }, [users, user]);
 
   // Update localStorage when user changes
   useEffect(() => {
@@ -70,7 +87,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user]);
 
-  // Local storage and API persistence
+  // Local storage and API persistence for patients
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -81,7 +98,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return;
         }
       } catch (error) {
-        console.log("Backend not reached, using local storage");
+        console.log("Backend not reached, using local storage/initial data");
       }
 
       const savedPatients = localStorage.getItem('phoenix_patients');
@@ -93,30 +110,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('phoenix_patients', JSON.stringify(patients));
+    if (patients.length > 0) {
+      localStorage.setItem('phoenix_patients', JSON.stringify(patients));
+    }
   }, [patients]);
-
-  useEffect(() => {
-    const savedWounds = localStorage.getItem('phoenix_wounds');
-    if (savedWounds) {
-      setWounds(JSON.parse(savedWounds));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('phoenix_wounds', JSON.stringify(wounds));
-  }, [wounds]);
-
-  useEffect(() => {
-    const savedNotes = localStorage.getItem('phoenix_clinical_notes');
-    if (savedNotes) {
-      setClinicalNotes(JSON.parse(savedNotes));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('phoenix_clinical_notes', JSON.stringify(clinicalNotes));
-  }, [clinicalNotes]);
 
   const addPatient = (patient: Patient) => {
     setPatients(prev => [...prev, patient]);
@@ -138,27 +135,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setClinicalNotes(prev => [...prev, note]);
   };
 
+  const addHandoverNote = (note: HandoverNote) => {
+    setHandoverNotes(prev => [...prev, note]);
+  };
+
   const addUser = (newUser: User) => {
-    setUsers(prev => [...prev, { ...newUser, id: Date.now().toString() }]);
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const updateUserInList = (updatedUser: User) => {
+    setUsers(prev => prev.map(u => u.documento === updatedUser.documento ? updatedUser : u));
+  };
+
+  const removeUser = (documento: string) => {
+    setUsers(prev => prev.filter(u => u.documento !== documento));
   };
 
   const validateBioCoreAuth = async (biometricData: string) => {
     console.log("[BioCore] Validating biometric signature:", biometricData.substring(0, 10) + "...");
-    // Mocking BioCore API call
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // For demo: if data is NOT "error", we authenticate
     const isValid = biometricData !== 'error';
     setIsBioCoreAuthenticated(isValid);
     setLoading(false);
     return isValid;
   };
 
+  const login = (userData: User) => {
+    setUser(userData);
+  };
+
   const logout = () => {
     setUser(null);
     setIsBioCoreAuthenticated(false);
+    localStorage.removeItem('polaris_token');
     console.log("Logging out...");
+  };
+
+  const setThemeValue = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
   };
 
   const state: AppState = {
@@ -168,6 +183,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     patients,
     wounds,
     clinicalNotes,
+    handoverNotes,
     users,
     isBioCoreAuthenticated
   };
@@ -176,21 +192,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     <AppContext.Provider value={{
       state,
       user,
+      users,
       patients,
       wounds,
       clinicalNotes,
+      handoverNotes,
+      isBioCoreAuthenticated,
       setUser,
-      setTheme,
+      login,
+      logout,
+      setTheme: setThemeValue,
       addPatient,
       updatePatient,
       addWound,
       updateWound,
       addClinicalNote,
+      addHandoverNote,
       addUser,
-      validateBioCoreAuth,
-      isBioCoreAuthenticated,
-      users,
-      logout
+      updateUserInList,
+      removeUser,
+      validateBioCoreAuth
     }}>
       {children}
     </AppContext.Provider>

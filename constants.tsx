@@ -20,7 +20,12 @@ import {
     ClipboardCheck,
     LogOut,
     Eye,
-    EyeOff
+    EyeOff,
+    Milestone,
+    Lock,
+    Filter,
+    ChevronDown,
+    X
 } from 'lucide-react';
 
 export const Icons = {
@@ -32,7 +37,7 @@ export const Icons = {
     Profile: <User size={20} />,
     Handover: <ClipboardList size={20} />,
     Clipboard: <Clipboard size={20} />,
-    Route: <Route size={20} />,
+    Route: <Milestone size={20} />,
     ClipboardCheck: <ClipboardCheck size={20} />,
     Production: <Package size={20} />,
     Settings: <Settings size={20} />,
@@ -46,9 +51,21 @@ export const Icons = {
     Users: <Users size={20} />,
     Eye: <Eye size={20} />,
     EyeOff: <EyeOff size={20} />,
+    Lock: <Lock size={20} />,
+    Filter: <Filter size={20} />,
+    ChevronDown: <ChevronDown size={20} />,
+    Close: <X size={20} />,
 };
 
-export const DOCUMENT_TYPES = ['CC', 'TI', 'CE', 'RC', 'PEP', 'PPT'];
+export const DOCUMENT_TYPES = [
+    { value: 'CC', label: 'Cédula de Ciudadanía' },
+    { value: 'TI', label: 'Tarjeta de Identidad' },
+    { value: 'CE', label: 'Cédula de Extranjería' },
+    { value: 'PA', label: 'Pasaporte' },
+    { value: 'RC', label: 'Registro Civil' },
+    { value: 'PEP', label: 'Permiso Especial de Permanencia' },
+    { value: 'PPT', label: 'Permiso por Protección Temporal' }
+];
 
 export const CLINICAS_ORIGEN = [
     'Clínica Santa María',
@@ -56,7 +73,11 @@ export const CLINICAS_ORIGEN = [
     'Fundación Valle del Lili',
     'Hospital El Tunal',
     'Clínica Colombia',
-    'Hospital San Ignacio'
+    'Hospital San Ignacio',
+    'Clínica San Juan',
+    'Hospital Central',
+    'Clínica del Norte',
+    'Clínica del Sur'
 ];
 
 export const PROGRAMAS = [
@@ -66,7 +87,12 @@ export const PROGRAMAS = [
     'Pie Diabético',
     'Úlceras Venosas',
     'Quemaduras',
-    'Heridas Quirúrgicas'
+    'Heridas Quirúrgicas',
+    'Padre',
+    'Amor',
+    'Gracia',
+    'Fé',
+    'Esperanza'
 ];
 
 export const WOUND_TREATMENTS = {
@@ -112,26 +138,28 @@ export const ANTIBIOTICOS = [
 ];
 
 export const OXIGENO_DISPOSITIVOS = [
-    'Cánula Nasal',
-    'Máscara Simple',
-    'Máscara con Reservorio',
-    'Concentrador de Oxígeno',
-    'Cilindro de Oxígeno'
+    { value: 'CANULA', label: 'Cánula Nasal' },
+    { value: 'MASCARA', label: 'Máscara Simple' },
+    { value: 'VENTURI', label: 'Mascara Venturi' },
+    { value: 'RESERVORIO', label: 'Máscara con Reservorio' },
+    { value: 'CONCENTRADOR', label: 'Concentrador de Oxígeno' },
+    { value: 'CILINDRO', label: 'Cilindro de Oxígeno' }
 ];
 
 export const SONDA_TIPOS = [
-    'Sonda Vesical (Foley)',
-    'Sonda Nasogástrica',
-    'Sonda de Gastrostomía',
-    'Cistostomía'
+    { value: 'VESICAL', label: 'Sonda Vesical' },
+    { value: 'NASOGASTRICA', label: 'Sonda Nasogástrica' },
+    { value: 'GASTROSTOMIA', label: 'Sonda de Gastrostomía' },
+    { value: 'CISTOSTOMIA', label: 'Cistostomía' }
 ];
 
 export const GLUCOMETRIA_FRECUENCIAS = [
-    'Cada 6 horas',
-    'Cada 8 horas',
-    'Cada 12 horas',
-    'Diario',
-    'En ayunas'
+    { value: 'AYUNAS', label: 'En Ayunas' },
+    { value: 'POSTPRANDIAL', label: 'Post-prandial' },
+    { value: 'CADA_6_HORAS', label: 'Cada 6 horas' },
+    { value: 'CADA_8_HORAS', label: 'Cada 8 horas' },
+    { value: 'CADA_12_HORAS', label: 'Cada 12 horas' },
+    { value: 'DIARIO', label: 'Diario' }
 ];
 
 export const GUIA_INFUSION_ANTIBIOTICOS = [
@@ -165,6 +193,18 @@ export const ROLES_CLINICOS = [
     'CIRUJANO PLÁSTICO'
 ];
 
+export const ROLES_ASISTENCIALES = [
+    'MÉDICO DOMICILIARIO',
+    'ENFERMERO(A) JEFE PAD ADMINISTRATIVO',
+    'AUXILIAR DE ENFERMERÍA',
+    'FISIOTERAPEUTA',
+    'TERAPEUTA OCUPACIONAL',
+    'FONOAUDIÓLOGO',
+    'NUTRICIONISTA',
+    'PSICÓLOGO',
+    'TRABAJADOR SOCIAL'
+];
+
 // Wound Assessment Scales
 export const PUSH_SCALE = {
     length_width: [0, 1, 2, 3, 4, 5],
@@ -185,7 +225,9 @@ export const BRADEN_SCALE = {
 export const AUDITFARMA_EMAILS = [
     'auditoria@auditfarma.com',
     'produccion@auditfarma.com',
-    'admin@auditfarma.com'
+    'admin@auditfarma.com',
+    'pedidos@audifarma.com.co',
+    'soporte@audifarma.com.co'
 ];
 
 // Medicamentos de Alto Riesgo
@@ -195,7 +237,11 @@ export const MEDICAMENTOS_ALTO_RIESGO = [
     'IMIPENEM',
     'COLISTINA',
     'LINEZOLID',
-    'DAPTOMICINA'
+    'DAPTOMICINA',
+    'Insulina',
+    'Warfarina',
+    'Heparina',
+    'Metotrexato'
 ];
 
 // Terapias por Programa
@@ -228,4 +274,23 @@ export const TERAPIAS_PALIATIVO = {
     'Psicología': true,
     'Apoyo espiritual': false,
     'Trabajo social': false
+};
+
+export const EXCLUDED_FROM_ROUTES = [
+    'ADMINISTRADOR',
+    'SOPORTE',
+    'COORDINADOR'
+];
+
+export const SERVICE_ROLE_MAPPING: Record<string, string[]> = {
+    'VISITA MÉDICA': ['MÉDICO DOMICILIARIO', 'MÉDICO ESPECIALISTA EN HERIDAS'],
+    'ENFERMERÍA': ['AUXILIAR DE ENFERMERÍA', 'ENFERMERO(A) JEFE PAD ADMINISTRATIVO'],
+    'APLICACIÓN DE TERAPIA ANTIBIÓTICA': ['AUXILIAR DE ENFERMERÍA'],
+    'FISIOTERAPIA': ['FISIOTERAPEUTA'],
+    'TERAPIA RESPIRATORIA': ['FISIOTERAPEUTA'],
+    'TERAPIA OCUPACIONAL': ['TERAPEUTA OCUPACIONAL'],
+    'FONOAUDIOLOGÍA': ['FONOAUDIÓLOGO'],
+    'NUTRICIÓN': ['NUTRICIONISTA'],
+    'PSICOLOGÍA': ['PSICÓLOGO'],
+    'TRABAJO SOCIAL': ['TRABAJADOR SOCIAL']
 };

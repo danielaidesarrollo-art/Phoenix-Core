@@ -2,60 +2,60 @@ from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-import datetime
 import os
+import json
+from datetime import datetime
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Import Service Clients
 from services.safecore_client import SafeCoreClient
 from services.datacore_client import DataCoreClient
 from services.biocore_client import BioCoreClient
 
+# Import SDK/Internal logic
+from safecore_sdk.middleware import PhoenixDecryptionMiddleware
+from safecore_sdk.compliance import ComplianceValidator
+from backend.wound_analysis import WoundAnalyzer
+
 app = FastAPI(title="Phoenix Core API")
+
+# Setup Middlewares
+app.add_middleware(CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(PhoenixDecryptionMiddleware)
 
 # Initialize Clients
 safecore = SafeCoreClient()
 datacore = DataCoreClient()
 biocore = BioCoreClient()
 
-# Load Synthetic Data if available
-def load_synthetic_data(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding='utf-8') as f:
-            return json.load(f)
-    return []
+# Serve static files from the build directory (for local dev/production)
+if os.path.exists("dist"):
+    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
 
-patients_db = load_synthetic_data("data/synthetic_patients.json")
-wounds_db = load_synthetic_data("data/synthetic_wounds.json")
+@app.get("/", include_in_schema=False)
+async def serve_frontend():
+    if os.path.exists("dist/index.html"):
+        return FileResponse("dist/index.html")
+    return {"message": "Phoenix Core API is running", "connections": "SafeCore, DataCore, BioCore INTEGRATED"}
 
-# Fallback to minimal mock if empty
-if not patients_db:
-    patients_db = [
-        {
-            "id": "P001",
-            "nombreCompleto": "Juan Perez",
-            "tipoDocumento": "CC",
-            "documento": "12345678",
-            "fechaNacimiento": "1980-05-15",
-            "genero": "Masculino",
-            "direccion": "Calle 123",
-            "telefonoMovil": "3001234567",
-            "correoElectronico": "juan@example.com",
-            "eps": "Sanitas",
-            "programa": "Clínica de Heridas",
-            "estado": "Aceptado",
-            "prioridad": "Media",
-            "fechaIngreso": "2023-10-01"
-        }
-    ]
+# Setup Local Storage
+DB_FILE = "local_db.json"
 
-# Enable CORS for the React frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def get_db():
+    if not os.path.exists(DB_FILE):
+        return {}
+    with open(DB_FILE, "r") as f:
+        return json.load(f)
+
+def save_db(data):
+    with open(DB_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 class Patient(BaseModel):
     id: str
@@ -73,115 +73,101 @@ class Patient(BaseModel):
     prioridad: str
     fechaIngreso: str
 
+class ClinicalRecord(BaseModel):
+    patient_id: str
+    wound_status: str
+    compliance: str = "HIPAA_REGULATED"
+
 class BiometricAuthRequest(BaseModel):
     userId: str
     biometricData: str
     liveness: bool = True
 
-# Security Dependency
-async def verify_security(request: Request):
-    """
-    Middleware-like dependency to ensure SafeCore compliance.
-    """
-    token = request.headers.get("Authorization")
-    if token:
-        # Verify with SafeCore (stripping 'Bearer ')
-        token_val = token.split(" ")[1] if " " in token else token
-        result = await safecore.verify_session(token_val)
-        if not result.get("valid"):
-            # For now, we log but don't block aggressively to allow dev testing
-            print(f"[Security Warning] SafeCore validation failed for token: {token_val}")
-    
-    # In a real scenario, we might throw HTTPException(403) here.
-    return True
+@app.get("/api/compliance")
+async def compliance():
+    validator = ComplianceValidator()
+    result = validator.validate()
+    return {
+        **result,
+        "system_state": "NORMAL",
+        "timestamp": datetime.now().isoformat()
+    }
 
 @app.get("/api/patients", response_model=List[Patient])
 async def get_patients():
-    """
-    Fetches patients from DataCore (or mock fallback if DataCore is offline).
-    """
-    try:
-        # Attempt to fetch list ID "patients_list" or similar from DataCore
-        # Since DataCore is generic, we might index differently. 
-        # For this prototype, we'll try to fetch a known manifest or iterate.
-        # Fallback to local mock for now until DataCore is seeded.
-        return patients_db
-    except Exception as e:
-        print(f"DataCore fetch error: {e}")
-        return patients_db
+    db = get_db()
+    # Simplified: convert local db to list of Patient models
+    patients = []
+    for pid, data in db.items():
+        if 'nombreCompleto' in data:
+            patients.append(data)
+    return patients
 
-@app.post("/api/patients")
-async def add_patient(patient: Patient, secured: bool = Depends(verify_security)):
-    """
-    Ingests patient data into DataCore.
-    """
+@app.post("/api/records")
+async def add_record(request: Request, record: ClinicalRecord = None):
     try:
-        # 1. Sanitize with SafeCore (optional step, usually handled by Gateway)
-        # await safecore.sanitize_input(patient.dict())
+        data = getattr(request.state, 'decrypted_body', None)
+        if not data:
+            if not record:
+                raise HTTPException(status_code=400, detail="Missing record data")
+            data = record.dict()
 
-        # 2. Persist to DataCore
-        result = await datacore.ingest_clinical_data(patient.id, patient.dict())
+        db = get_db()
+        patient_id = data.get('patient_id')
+        db[patient_id] = {
+            'nombre': f'Paciente {patient_id}',
+            'diagnostico': data.get('wound_status'),
+            'fecha': datetime.now().isoformat(),
+            'compliance': data.get('compliance', 'HIPAA_REGULATED'),
+            'provider': 'DANIEL_AI',
+            'secure_transit': getattr(request.state, 'is_encrypted', False)
+        }
+        save_db(db)
         
-        # Keep local cache in sync for now
-        patients_db.append(patient.dict())
-        
-        return {"status": "success", "message": "Patient secured in DataCore", "datacore_ref": result}
-    except Exception as e:
-        # Fallback
-        patients_db.append(patient.dict())
-        return {"status": "partial_success", "message": "Saved locally (DataCore unavailable)", "error": str(e)}
+        # Also persist to DataCore if possible
+        try:
+            await datacore.ingest_clinical_data(patient_id, db[patient_id])
+        except:
+            pass
 
-@app.post("/api/auth/bio")
-async def biometric_auth(req: BiometricAuthRequest):
-    """
-    Proxy to BioCore for biometric authentication.
-    """
+        return {"message": "Registro guardado de forma segura.", "id": patient_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/diagnose")
+async def diagnose_wound(request: Request):
     try:
-        result = await biocore.authenticate_biometric(req.userId, req.biometricData, req.liveness)
-        return result
+        data = getattr(request.state, 'decrypted_body', None) or await request.json()
+        tissue_type = data.get('tissue_type', 'GRANULATION')
+        patient_id = data.get('patient_id', 'P-UNKNOWN')
+        
+        result = WoundAnalyzer.analyze_tissue(tissue_type)
+        
+        db = get_db()
+        db[patient_id] = {
+            **result,
+            'patient_id': patient_id,
+            'scale': 'VEGA',
+            'provider': 'DANIEL_AI_WOUND_CLINIC'
+        }
+        save_db(db)
+        
+        return {
+            "success": True,
+            "patient_id": patient_id,
+            "diagnostic": result
+        }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/")
-async def root():
-    return {"message": "Phoenix Core API is running", "connections": "SafeCore, DataCore, BioCore INTEGRATED"}
-
-# Mock data (Fallback)
-patients_db = [
-    {
-        "id": "P001",
-        "nombreCompleto": "Juan Perez",
-        "tipoDocumento": "CC",
-        "documento": "12345678",
-        "fechaNacimiento": "1980-05-15",
-        "genero": "Masculino",
-        "direccion": "Calle 123",
-        "telefonoMovil": "3001234567",
-        "correoElectronico": "juan@example.com",
-        "eps": "Sanitas",
-        "programa": "Clínica de Heridas",
-        "estado": "Aceptado",
-        "prioridad": "Media",
-        "fechaIngreso": "2023-10-01"
-    },
-    {
-        "id": "P002",
-        "nombreCompleto": "Maria Rodriguez",
-        "tipoDocumento": "CC",
-        "documento": "87654321",
-        "fechaNacimiento": "1992-08-20",
-        "genero": "Femenino",
-        "direccion": "Avenida Siempre Viva",
-        "telefonoMovil": "3109876543",
-        "correoElectronico": "maria@example.com",
-        "eps": "Sura",
-        "programa": "Hospitalización Domiciliaria",
-        "estado": "Pendiente",
-        "prioridad": "Alta",
-        "fechaIngreso": "2023-11-15"
-    }
-]
+@app.get("/api/records/{patient_id}")
+async def get_record(patient_id: str):
+    db = get_db()
+    if patient_id in db:
+        return db[patient_id]
+    raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)

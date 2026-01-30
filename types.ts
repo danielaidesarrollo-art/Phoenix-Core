@@ -3,7 +3,7 @@ export interface Patient {
     tipoDocumento: string;
     nombreCompleto: string;
     fechaNacimiento: string;
-    direccion?: string; // Optional for clinic patients
+    direccion?: string;
     coordinates?: { lat: number; lng: number };
     telefonoFijo?: string;
     telefonoMovil: string;
@@ -14,21 +14,21 @@ export interface Patient {
     alergicoMedicamentos: boolean;
     alergiasInfo?: string;
     diagnosticoPrincipal?: string;
-    diagnosticoEgreso?: string; // Match usage
+    diagnosticoEgreso?: string;
     clinicaEgreso?: string;
     programa: string;
     tratamientos?: { [key: string]: boolean };
-    terapias?: { [key: string]: boolean }; // From data
+    terapias?: { [key: string]: boolean } | Record<string, boolean>;
     oxigeno?: { dispositivo: string; litraje: number };
     antibiotico?: AntibioticTreatment;
     sondaInfo?: { tipo: string };
     heridaInfo?: { tipo: string; localizacion: string };
     glucometriaInfo?: { frecuencia: string };
     otrasTerapiasInfo?: string;
-    estado: 'Activo' | 'Inactivo' | 'Alta' | 'Pendiente' | 'Aceptado';
+    estado: 'Activo' | 'Inactivo' | 'Alta' | 'Pendiente' | 'Aceptado' | 'Rechazado';
     ingresadoPor: string;
     fechaIngreso: string;
-    wounds?: WoundRecord[]; // Array of wounds for this patient
+    wounds?: WoundRecord[];
 }
 
 export interface AntibioticTreatment {
@@ -41,13 +41,11 @@ export interface AntibioticTreatment {
     diaActual?: number;
 }
 
-
-// Wound Management Types
 export interface WoundRecord {
     id: string;
     patientId: string;
-    tipo: string; // From WOUND_TYPES
-    localizacion: string; // From WOUND_LOCATIONS
+    tipo: string;
+    localizacion: string;
     fechaDeteccion: string;
     fechaCierre?: string;
     estado: 'Abierta' | 'En Tratamiento' | 'Cerrada' | 'Complicada';
@@ -62,25 +60,19 @@ export interface WoundAssessment {
     fecha: string;
     evaluadorNombre: string;
     evaluadorRol: string;
-    // Measurements
-    largo: number; // cm
-    ancho: number; // cm
-    profundidad: number; // cm
-    area?: number; // cm² (calculated)
-    // Tissue Assessment
-    tipoTejido: string; // From PUSH_SCALE.tissue_type
-    exudado: string; // From PUSH_SCALE.exudate
+    largo: number;
+    ancho: number;
+    profundidad: number;
+    area?: number;
+    tipoTejido: string;
+    exudado: string;
     olor: 'Sin olor' | 'Leve' | 'Moderado' | 'Fétido';
     bordes: 'Regulares' | 'Irregulares' | 'Macerados' | 'Fibróticos';
-    // Pain & Infection
-    dolor: number; // 0-10 scale
+    dolor: number;
     signosInfeccion: boolean;
     infeccionDetalles?: string;
-    // PUSH Score
     pushScore?: number;
-    // Photos
-    fotos: string[]; // URLs or base64
-    // AI Analysis
+    fotos: string[];
     aiAnalysis?: WoundAnalysisResult;
     notas?: string;
 }
@@ -107,17 +99,14 @@ export interface TreatmentPlan {
     woundId: string;
     fechaCreacion: string;
     creadoPor: string;
-    // Treatment Details
     objetivoTerapeutico: string;
     aposito: string;
-    frecuenciaCuracion: string; // "Diario", "Cada 2 días", etc.
+    frecuenciaCuracion: string;
     desbridamiento: boolean;
     desbridamientoTipo?: string;
-    terapiaAdicional?: string[]; // VAC, compresión, etc.
-    // Medications
+    terapiaAdicional?: string[];
     antibioticos?: string[];
     analgesicos?: string[];
-    // Follow-up
     proximaEvaluacion: string;
     instrucciones: string;
     activo: boolean;
@@ -136,16 +125,15 @@ export interface WoundEvolution {
     notas?: string;
 }
 
-
 export interface ClinicalNote {
     id: string;
     patientId: string;
-    woundId?: string; // Optional link to specific wound
+    woundId?: string;
     authorName: string;
     authorRole: string;
     timestamp: string;
     tipo: 'Evaluación' | 'Curación' | 'Seguimiento' | 'Complicación' | 'Alta';
-    nota: string;
+    note: string;
     signosVitales?: {
         tensionArterial: string;
         frecuenciaCardiaca: string;
@@ -157,7 +145,7 @@ export interface ClinicalNote {
 
 export interface User {
     id?: string;
-    documento?: string;
+    documento: string;
     nombre: string;
     correo: string;
     institucion?: string;
@@ -167,4 +155,39 @@ export interface User {
     turnoInicio?: string;
     turnoFin?: string;
     maxPacientes?: number;
+}
+
+export interface HandoverNote {
+    id: string;
+    patientId: string;
+    authorId: string;
+    authorName: string;
+    authorRole: string;
+    timestamp: string;
+    note: string;
+    antibioticData?: any;
+    antibioticStatus?: string;
+    oxygenInfo?: string;
+    labRequests?: string;
+    referralInfo?: string;
+    dischargeOrders?: string;
+    ivAccessInfo?: string;
+    phlebitisScale?: number;
+    pressureUlcersInfo?: string;
+    administracionMedicamentos?: string;
+    curaciones?: string;
+    manejoSondas?: string;
+    tomaGlucometrias?: string;
+    soporteNutricional?: string;
+    estadoPiel?: string;
+    signosVitales?: {
+        tensionArterial: string;
+        frecuenciaCardiaca: string;
+        frecuenciaRespiratoria: string;
+        temperatura: string;
+        saturacionO2: string;
+    };
+    fisioterapia?: any;
+    terapiaOcupacional?: any;
+    fonoaudiologia?: any;
 }

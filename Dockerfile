@@ -1,29 +1,34 @@
-# Build stage
-FROM node:18-alpine AS builder
-
+# Stage 1: Build the React frontend
+FROM node:18-alpine AS frontend-builder
 WORKDIR /app
-
-# Copiar package files
 COPY package*.json ./
-
-# Instalar dependencias
-RUN npm ci
-
-# Copiar código fuente
+RUN npm install
 COPY . .
-
-# Build de producción
+RUN chmod -R +x node_modules/.bin
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Stage 2: Serve with FastAPI
+FROM python:3.11-slim
+WORKDIR /app
 
-# Copiar build a nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar configuración de nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy backend source code specifically
+COPY phoenix_core_app.py .
+COPY backend/ ./backend/
+COPY safecore_sdk/ ./safecore_sdk/
 
+# Copy built frontend assets from Stage 1
+COPY --from=frontend-builder /app/dist ./dist
+
+# Expose port
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+# Environment variables
+ENV SAFECORE_CLIENT_SECRET=test-secret-123
+ENV PORT=8080
+
+# Run the application using uvicorn CLI
+CMD ["uvicorn", "phoenix_core_app:app", "--host", "0.0.0.0", "--port", "8080"]

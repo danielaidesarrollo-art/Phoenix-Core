@@ -1,8 +1,7 @@
 
-
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Icons } from '../constants.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Icons } from '../constants';
 
 interface NavbarProps {
     onNavigate: (view: string) => void;
@@ -23,7 +22,6 @@ const NavItem: React.FC<{ icon: React.ReactNode; label: string; isActive: boolea
 );
 
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
     const { user, logout } = useAppContext();
 
     const safeRender = (value: any) => {
@@ -31,13 +29,13 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeView }) => {
     };
 
     return (
-        <nav className="sticky top-0 z-50 px-4 py-3">
-            <div className="max-w-7xl mx-auto glass-panel rounded-2xl px-4 py-2 flex items-center justify-between">
+        <nav className="sticky top-0 z-50 px-4 py-3 bg-white border-b border-slate-200 shadow-sm backdrop-blur-md">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                        <span className="text-white font-bold text-lg">P</span>
+                    <div className="w-10 h-10 flex items-center justify-center bg-blue-600 rounded-lg text-white font-bold text-xl">
+                        P
                     </div>
-                    <span className="font-bold text-slate-800 text-lg tracking-tight hidden md:block">Phoenix Core</span>
+                    <span className="font-bold text-slate-800 text-xl tracking-tight hidden md:block">Phoenix Core</span>
                 </div>
 
                 <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl">

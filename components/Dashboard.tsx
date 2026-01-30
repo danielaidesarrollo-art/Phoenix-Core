@@ -4,7 +4,6 @@ import PatientList from './PatientList.tsx';
 import ProfileView from './ProfileView.tsx';
 import DanielView from './Daniel/DanielView.tsx';
 import WoundRegistry from './WoundRegistry.tsx';
-
 import { useAppContext } from '../context/AppContext.tsx';
 import Login from './Login.tsx';
 
@@ -12,13 +11,17 @@ const Dashboard: React.FC = () => {
     const { user } = useAppContext();
     const [activeView, setActiveView] = useState('dashboard');
 
-    // Ensure that if the view state is ever invalid, it defaults back to the patient list.
     useEffect(() => {
         const validViews = ['dashboard', 'wounds', 'daniel', 'profile'];
         if (!validViews.includes(activeView)) {
             setActiveView('dashboard');
         }
     }, [activeView]);
+
+    useEffect(() => {
+        // Polaris Session Pulse Check
+        import('../utils/safeCore.ts').then(m => m.SessionValidator?.checkPulse?.()).catch(() => { });
+    }, []);
 
     const renderView = () => {
         switch (activeView) {

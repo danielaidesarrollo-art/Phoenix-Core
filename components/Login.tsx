@@ -1,17 +1,15 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import Input from './ui/Input.tsx';
-import Button from './ui/Button.tsx';
-import { Icons } from '../constants.tsx';
-import Register from './Register.tsx';
+import { useAppContext } from '../context/AppContext';
+import Input from './ui/Input';
+import Button from './ui/Button';
+import { Icons } from '../constants';
+import Register from './Register';
 
 const Login: React.FC = () => {
     const [documento, setDocumento] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
-    // Fix: Destructure properties directly from useAppContext as the 'state' object is no longer part of the context type.
     const { setUser, users } = useAppContext();
 
     const handleLogin = (e: React.FormEvent) => {
@@ -32,8 +30,13 @@ const Login: React.FC = () => {
         }
     };
 
+    const handlePolarisRedirect = () => {
+        // Polaris (BioCore) URL integration
+        window.location.href = 'http://localhost:5173';
+    };
+
     if (isRegistering) {
-        return <Register onBackToLogin={() => setIsRegistering(false)} />;
+        return <Register onBack={() => setIsRegistering(false)} />;
     }
 
     return (
@@ -61,7 +64,7 @@ const Login: React.FC = () => {
 
                     <form className="space-y-6" onSubmit={handleLogin}>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Documento de Identidad</label>
+                            <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1" htmlFor="documento">Documento de Identidad</label>
                             <input
                                 id="documento"
                                 type="text"
@@ -74,7 +77,7 @@ const Login: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1">Contraseña</label>
+                            <label className="text-xs font-semibold text-blue-200 uppercase tracking-wider ml-1" htmlFor="password">Contraseña</label>
                             <input
                                 id="password"
                                 type="password"
@@ -93,13 +96,29 @@ const Login: React.FC = () => {
                             </div>
                         )}
 
-                        <button
+                        <Button
                             type="submit"
-                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transform hover:-translate-y-0.5 transition-all duration-200"
+                            className="w-full py-6 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold"
                         >
                             Ingresar al Sistema
-                        </button>
+                        </Button>
                     </form>
+
+                    <div className="mt-6 flex flex-col gap-4">
+                        <div className="relative flex items-center py-2">
+                            <div className="flex-grow border-t border-white/10"></div>
+                            <span className="flex-shrink mx-4 text-white/40 text-xs font-bold uppercase tracking-widest">O</span>
+                            <div className="flex-grow border-t border-white/10"></div>
+                        </div>
+
+                        <button
+                            onClick={handlePolarisRedirect}
+                            className="flex w-full h-14 items-center justify-center rounded-xl bg-blue-500/20 text-blue-100 font-bold text-sm border border-blue-400/30 hover:bg-blue-500/30 transition-all gap-3"
+                        >
+                            <span className="material-symbols-outlined font-bold text-xl">fingerprint</span>
+                            Autenticar vía Polaris
+                        </button>
+                    </div>
 
                     <div className="mt-8 pt-6 border-t border-white/10 text-center">
                         <button onClick={() => setIsRegistering(true)} className="text-sm text-blue-300 hover:text-white transition-colors">
