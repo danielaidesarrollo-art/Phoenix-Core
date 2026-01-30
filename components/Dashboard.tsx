@@ -6,11 +6,10 @@ import PatientList from './PatientList';
 import HandoverForm from './HandoverForm';
 import ScheduleView from './ScheduleView';
 import ProfileView from './ProfileView';
-import MapView from './MapView';
-import RoutePlanner from './RoutePlanner';
 import StaffManagement from './StaffManagement';
 import ProductionOrderView from './ProductionOrderView'; // New Import
 import DanielView from './Daniel/DanielView';
+import WoundClinicConsole from './WoundClinic/WoundClinicConsole';
 
 const Dashboard: React.FC = () => {
     const [activeView, setActiveView] = useState('dashboard');
@@ -18,7 +17,7 @@ const Dashboard: React.FC = () => {
     // Ensure that if the view state is ever invalid, it defaults back to the patient list.
     // This makes the navigation more robust and aligns with ensuring the patient list is the primary view.
     useEffect(() => {
-        const validViews = ['dashboard', 'handover', 'schedule', 'profile', 'map', 'routes', 'staff', 'production', 'daniel'];
+        const validViews = ['dashboard', 'handover', 'schedule', 'profile', 'staff', 'production', 'daniel', 'woundclinic'];
         if (!validViews.includes(activeView)) {
             setActiveView('dashboard');
         }
@@ -38,14 +37,12 @@ const Dashboard: React.FC = () => {
                 return <HandoverForm />;
             case 'schedule':
                 return <ScheduleView />;
-            case 'map':
-                return <MapView />;
-            case 'routes':
-                return <RoutePlanner />;
             case 'production':
                 return <ProductionOrderView />;
             case 'daniel':
                 return <DanielView />;
+            case 'woundclinic':
+                return <WoundClinicConsole />;
             case 'profile':
                 return <ProfileView />;
             case 'staff':
