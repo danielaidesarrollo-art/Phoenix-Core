@@ -1,13 +1,19 @@
 {
-    "project_name": "Daniel_AI_Phoenix",
-    "project_id": "00000000-0000-0000-0000-000000000101",
-    "compliance_level": "L3",
-    "features": {
-        "clinical_management": true,
-        "wound_analysis": true,
-        "encryption": true
-    },
-    "contacts": [
-        "phoenix-dev@daniel.ai"
-    ]
+    "core_id": "PHOENIX",
+    "type": "CLINICAL_DIAGNOSTICS",
+    "name": "Phoenix Wound Care & Diagnostics Core",
+    "description": "Advanced wound assessment using RESVECH 2.0 scale, TIMERS framework, and biofilm management protocols for comprehensive wound care.",
+    "version": "1.0.0",
+    "capabilities": [
+        "WOUND_ANALYSIS",
+        "RESVECH_SCORING",
+        "TIMERS_FRAMEWORK",
+        "BIOFILM_DETECTION",
+        "IMAGE_PROCESSING"
+    ],
+    "dependencies": [
+        "IRIS",
+        "DANIEL_DATACORE"
+    ],
+    "maintainer": "Daniel AI System"
 }

@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './Navbar.tsx';
-import PatientList from './PatientList.tsx';
-import ProfileView from './ProfileView.tsx';
-import DanielView from './Daniel/DanielView.tsx';
-import WoundRegistry from './WoundRegistry.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
-import Login from './Login.tsx';
+import Navbar from './Navbar';
+import PatientList from './PatientList';
+import ProfileView from './ProfileView';
+import DanielView from './Daniel/DanielView';
+import WoundRegistry from './WoundRegistry';
+import WoundClinicConsole from './WoundClinic/WoundClinicConsole';
+import HandoverForm from './HandoverForm';
+import ScheduleView from './ScheduleView';
+import StaffManagement from './StaffManagement';
+import ProductionOrderView from './ProductionOrderView';
+import { useAppContext } from '../context/AppContext';
+import Login from './Login';
 
 const Dashboard: React.FC = () => {
     const { user } = useAppContext();
     const [activeView, setActiveView] = useState('dashboard');
 
     useEffect(() => {
-        const validViews = ['dashboard', 'wounds', 'daniel', 'profile'];
+        const validViews = ['dashboard', 'wounds', 'daniel', 'profile', 'handover', 'schedule', 'staff', 'production', 'woundclinic'];
         if (!validViews.includes(activeView)) {
             setActiveView('dashboard');
         }
@@ -29,8 +34,18 @@ const Dashboard: React.FC = () => {
                 return <PatientList />;
             case 'wounds':
                 return <WoundRegistry />;
+            case 'handover':
+                return <HandoverForm />;
+            case 'schedule':
+                return <ScheduleView />;
+            case 'production':
+                return <ProductionOrderView />;
             case 'daniel':
                 return <DanielView />;
+            case 'woundclinic':
+                return <WoundClinicConsole />;
+            case 'staff':
+                return <StaffManagement />;
             case 'profile':
                 return <ProfileView />;
             default:
