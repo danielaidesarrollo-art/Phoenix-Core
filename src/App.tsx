@@ -1,30 +1,63 @@
-
-import React from 'react';
-import { AppProvider, useAppContext } from '../context/AppContext';
-import Dashboard from '../components/Dashboard';
-import PolarisLogin from '../components/Auth/PolarisLogin';
+import React, { useEffect } from 'react';
+import { AppProvider, useAppContext } from './context/AppContext';
+import Dashboard from './components/Dashboard';
+import Login from './components/Login';
+import SiriusAuditBanner from './components/SiriusAuditBanner';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 const AppContent: React.FC = () => {
-    const { user, login } = useAppContext();
+    const { user } = useAppContext();
 
-    // Simulate login for Polaris workflow
-    const handleLogin = (userData: any) => {
-        login({ id: userData.id, nombre: 'Dr. Daniel', cargo: 'JEFE MEDICO' } as any);
-    };
+    return (
+        <>
+            {/* PWA Install Prompt - shows when app is not installed */}
+            <PWAInstallPrompt />
 
-    return user ? <Dashboard /> : (
-        <PolarisLogin
-            onLogin={handleLogin}
-            coreName="Phoenix"
-            coreRole="Advanced Clinical Node"
-        />
+            {/* Main Content */}
+            {user ? (
+                <>
+                    {/* SIRIUS Audit Banner - shows after login */}
+                    <SiriusAuditBanner position="bottom" />
+                    <Dashboard />
+                </>
+            ) : (
+                <Login />
+            )}
+        </>
     );
 };
 
 function App() {
+    useEffect(() => {
+        // Register Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker
+                    .register('/sw.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // Add PWA install prompt listener
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            console.log('📱 PWA install prompt available');
+        });
+
+        // Detect if app is installed
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ Phoenix Core PWA installed successfully');
+        });
+    }, []);
+
     return (
         <AppProvider>
-            <div className="App min-h-screen bg-gray-50">
+            <div className="App min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
                 <AppContent />
             </div>
         </AppProvider>
